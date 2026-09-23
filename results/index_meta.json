@@ -1,0 +1,48 @@
+{
+  "kdtree": {
+    "pca_dim": 32,
+    "explained_variance": 0.605988153000965,
+    "n": 639,
+    "sets": [
+      "color",
+      "shape",
+      "texture",
+      "deep"
+    ],
+    "weights": {
+      "color": 0.3,
+      "shape": 0.25,
+      "texture": 0.2,
+      "deep": 0.25
+    },
+    "built_at": "2026-09-24T00:25:19"
+  },
+  "kmeans": {
+    "k": 8,
+    "inertia": 617.8725668787665,
+    "sizes": [
+      61,
+      92,
+      30,
+      111,
+      75,
+      66,
+      124,
+      80
+    ],
+    "n": 639,
+    "sets": [
+      "color",
+      "shape",
+      "texture",
+      "deep"
+    ],
+    "weights": {
+      "color": 0.3,
+      "shape": 0.25,
+      "texture": 0.2,
+      "deep": 0.25
+    },
+    "built_at": "2026-09-24T00:25:33"
+  }
+}
