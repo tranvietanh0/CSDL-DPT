@@ -5,6 +5,7 @@ trích rút nhiều bộ đặc trưng (màu sắc, hình dạng, kết cấu/b�
 SQLite và tìm 5 ảnh giống nhất với một ảnh cây mới.
 
 Báo cáo đầy đủ: `docs/BaoCao_HeCSDL_AnhCay.docx` / `docs/BaoCao_HeCSDL_AnhCay.pdf`.
+Hướng dẫn dùng demo web: `docs/HUONG_DAN_DEMO.md`.
 
 ## Cấu trúc
 

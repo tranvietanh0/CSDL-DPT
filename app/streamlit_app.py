@@ -83,10 +83,12 @@ def render_sidebar(conn) -> dict:
     sets = module.list_feature_sets(conn)
     st.sidebar.caption("Bộ đặc trưng: " + " · ".join(f"{f['set_name']} {f['dim']} chiều ({f['metric']})" for f in sets))
     st.sidebar.divider()
-    backend = st.sidebar.selectbox("Phương pháp chọn ứng viên", BACKENDS)
+    qp = st.query_params  # ?backend=kmeans&debug=1 -> giá trị mặc định (phục vụ demo / chụp màn hình)
+    backend = st.sidebar.selectbox("Phương pháp chọn ứng viên", BACKENDS,
+                                   index=BACKENDS.index(qp.get("backend")) if qp.get("backend") in BACKENDS else 0)
     top_k = st.sidebar.slider("Số kết quả (top-K)", 1, 10, int(_mod("config").TOP_K))
     weights = weight_sliders([fs["set_name"] for fs in sets])
-    debug = st.sidebar.checkbox("Hiển thị giá trị trung gian", value=False)
+    debug = st.sidebar.checkbox("Hiển thị giá trị trung gian", value=qp.get("debug") == "1")
     return {"backend": backend, "top_k": top_k, "weights": weights, "show_debug": debug}
 
 

@@ -7,3 +7,5 @@ results/tmp/
 models/
 *.log
 .streamlit/
+*.sqlite-wal
+*.sqlite-shm
