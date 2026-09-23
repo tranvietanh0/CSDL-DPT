@@ -1,0 +1,207 @@
+{
+  "n_database": 639,
+  "n_queries": 255,
+  "k": 5,
+  "genera": {
+    "Acacia": 5,
+    "Alnus": 13,
+    "Betula": 24,
+    "Juglans": 33,
+    "Pinus": 45,
+    "Populus": 59,
+    "Quercus": 57,
+    "Tilia": 10,
+    "Vachellia": 9
+  },
+  "random_baseline": {
+    "p_at_k": 0.06478578892371997,
+    "group_p_at_k": 0.3257422091093491
+  },
+  "feature_sets": {
+    "color": {
+      "p_at_k": 0.26431372549019655,
+      "p_at_1": 0.4392156862745098,
+      "ap_at_k": 0.4834368191721132,
+      "group_p_at_k": 0.5803921568627449,
+      "ms_per_query": 8.338447058814186,
+      "n_queries": 255,
+      "weights": {
+        "color": 1.0,
+        "shape": 0.0,
+        "texture": 0.0,
+        "deep": 0.0
+      },
+      "backend": "linear"
+    },
+    "shape": {
+      "p_at_k": 0.12549019607843118,
+      "p_at_1": 0.10980392156862745,
+      "ap_at_k": 0.23187363834422678,
+      "group_p_at_k": 0.5003921568627452,
+      "ms_per_query": 7.864883529420659,
+      "n_queries": 255,
+      "weights": {
+        "color": 0.0,
+        "shape": 1.0,
+        "texture": 0.0,
+        "deep": 0.0
+      },
+      "backend": "linear"
+    },
+    "texture": {
+      "p_at_k": 0.2219607843137257,
+      "p_at_1": 0.3411764705882353,
+      "ap_at_k": 0.41513071895424836,
+      "group_p_at_k": 0.5474509803921572,
+      "ms_per_query": 8.148623921585443,
+      "n_queries": 255,
+      "weights": {
+        "color": 0.0,
+        "shape": 0.0,
+        "texture": 1.0,
+        "deep": 0.0
+      },
+      "backend": "linear"
+    },
+    "deep": {
+      "p_at_k": 0.3090196078431375,
+      "p_at_1": 0.4627450980392157,
+      "ap_at_k": 0.5195479302832244,
+      "group_p_at_k": 0.6274509803921565,
+      "ms_per_query": 7.7976760784319294,
+      "n_queries": 255,
+      "weights": {
+        "color": 0.0,
+        "shape": 0.0,
+        "texture": 0.0,
+        "deep": 1.0
+      },
+      "backend": "linear"
+    },
+    "handcrafted(color+shape+texture)": {
+      "p_at_k": 0.28705882352941225,
+      "p_at_1": 0.4470588235294118,
+      "ap_at_k": 0.5031862745098039,
+      "group_p_at_k": 0.6109803921568632,
+      "ms_per_query": 6.106481176467758,
+      "n_queries": 255,
+      "weights": {
+        "color": 0.4,
+        "shape": 0.3,
+        "texture": 0.3,
+        "deep": 0.0
+      },
+      "backend": "linear"
+    },
+    "combined(default)": {
+      "p_at_k": 0.33254901960784383,
+      "p_at_1": 0.5333333333333333,
+      "ap_at_k": 0.5731045751633986,
+      "group_p_at_k": 0.6478431372549025,
+      "ms_per_query": 6.977396078439722,
+      "n_queries": 255,
+      "weights": {
+        "color": 0.3,
+        "shape": 0.25,
+        "texture": 0.2,
+        "deep": 0.25
+      },
+      "backend": "linear"
+    },
+    "color+shape": {
+      "p_at_k": 0.2235294117647061,
+      "p_at_1": 0.34509803921568627,
+      "ap_at_k": 0.4392701525054467,
+      "group_p_at_k": 0.5576470588235294,
+      "ms_per_query": 6.87043372548514,
+      "n_queries": 255,
+      "weights": {
+        "color": 0.5,
+        "shape": 0.5,
+        "texture": 0.0,
+        "deep": 0.0
+      },
+      "backend": "linear"
+    },
+    "deep+shape": {
+      "p_at_k": 0.3043137254901967,
+      "p_at_1": 0.4235294117647059,
+      "ap_at_k": 0.5062037037037035,
+      "group_p_at_k": 0.6188235294117651,
+      "ms_per_query": 8.839123137266713,
+      "n_queries": 255,
+      "weights": {
+        "color": 0.0,
+        "shape": 0.4,
+        "texture": 0.0,
+        "deep": 0.6
+      },
+      "backend": "linear"
+    },
+    "deep+color+shape": {
+      "p_at_k": 0.32549019607843205,
+      "p_at_1": 0.5058823529411764,
+      "ap_at_k": 0.5688888888888891,
+      "group_p_at_k": 0.6305882352941179,
+      "ms_per_query": 6.898568235292081,
+      "n_queries": 255,
+      "weights": {
+        "color": 0.25,
+        "shape": 0.25,
+        "texture": 0.0,
+        "deep": 0.5
+      },
+      "backend": "linear"
+    }
+  },
+  "backends": {
+    "linear": {
+      "p_at_k": 0.33866666666666667,
+      "p_at_1": 0.5466666666666666,
+      "ap_at_k": 0.5775000000000002,
+      "group_p_at_k": 0.652,
+      "ms_per_query": 5.915127333331232,
+      "n_queries": 150,
+      "weights": {
+        "color": 0.3,
+        "shape": 0.25,
+        "texture": 0.2,
+        "deep": 0.25
+      },
+      "backend": "linear",
+      "recall_vs_linear": 1.0
+    },
+    "kdtree": {
+      "p_at_k": 0.344,
+      "p_at_1": 0.5466666666666666,
+      "ap_at_k": 0.5761944444444447,
+      "group_p_at_k": 0.6533333333333333,
+      "ms_per_query": 0.8351440000114962,
+      "n_queries": 150,
+      "weights": {
+        "color": 0.3,
+        "shape": 0.25,
+        "texture": 0.2,
+        "deep": 0.25
+      },
+      "backend": "kdtree",
+      "recall_vs_linear": 0.9066666666666666
+    },
+    "kmeans": {
+      "p_at_k": 0.3399999999999999,
+      "p_at_1": 0.5333333333333333,
+      "ap_at_k": 0.5671574074074076,
+      "group_p_at_k": 0.6493333333333332,
+      "ms_per_query": 1.6250959999645904,
+      "n_queries": 150,
+      "weights": {
+        "color": 0.3,
+        "shape": 0.25,
+        "texture": 0.2,
+        "deep": 0.25
+      },
+      "backend": "kmeans",
+      "recall_vs_linear": 0.7919999999999999
+    }
+  }
+}

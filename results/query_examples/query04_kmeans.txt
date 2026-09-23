@@ -1,0 +1,13 @@
+Anh truy van: C:\Projects\MyProject\CSDL-DPT\data\queries\query_04.jpg  (ti le vung cay: 17.03%)
+Backend: kmeans  | ung vien: 235/639  | trong so: color=0.30, shape=0.25, texture=0.20, deep=0.25
+  dac trung [color] dim=369: hsv_global(72), hsv_grid(144), hsv_fg(72), hsv_bg(72), moments(9)
+  dac trung [shape] dim=113: region(10), hu(7), grid(64), fourier(16), profile(16)
+  dac trung [texture] dim=85: glcm(10), lbp(28), edge(9), tamura(3), dct(35)
+  dac trung [deep] dim=1280: mobilenetv2_gap(1280)
+ # anh            chi             sim       D |     color     shape   texture      deep
+ 1 tree_0130.jpg  Betula        0.622   0.608 |     0.453     0.969     0.487     0.529
+ 2 tree_0584.jpg                0.619   0.615 |     0.605     0.554     0.814     0.530
+ 3 tree_0077.jpg  Betula        0.608   0.646 |     0.641     0.535     0.792     0.645
+ 4 tree_0078.jpg  Populus       0.594   0.684 |     0.946     0.636     0.587     0.495
+ 5 tree_0602.jpg  Ficus         0.590   0.696 |     0.822     0.628     0.704     0.605
+Thoi gian (ms): load_normalize=4.9, segment=281.1, extract_color=9.9, extract_shape=15.9, extract_texture=38.2, extract_deep=4.1, candidates=0.4, distance_rank=1.6, total=356.4

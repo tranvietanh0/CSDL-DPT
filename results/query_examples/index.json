@@ -1,0 +1,134 @@
+[
+  {
+    "stem": "query01_linear",
+    "query": "query_01.jpg",
+    "genus": "Betula",
+    "backend": "linear",
+    "top": [
+      [
+        "tree_0057.jpg",
+        "Juglans",
+        0.5824
+      ],
+      [
+        "tree_0165.jpg",
+        "Betula",
+        0.5778
+      ],
+      [
+        "tree_0198.jpg",
+        "Populus",
+        0.5765
+      ],
+      [
+        "tree_0028.jpg",
+        "Populus",
+        0.5764
+      ],
+      [
+        "tree_0261.jpg",
+        "Quercus",
+        0.576
+      ]
+    ]
+  },
+  {
+    "stem": "query02_linear",
+    "query": "query_02.jpg",
+    "genus": "Alnus",
+    "backend": "linear",
+    "top": [
+      [
+        "tree_0034.jpg",
+        "Alnus",
+        0.6304
+      ],
+      [
+        "tree_0181.jpg",
+        "Quercus",
+        0.5947
+      ],
+      [
+        "tree_0192.jpg",
+        "Quercus",
+        0.5927
+      ],
+      [
+        "tree_0087.jpg",
+        "Juglans",
+        0.5853
+      ],
+      [
+        "tree_0285.jpg",
+        "Quercus",
+        0.5801
+      ]
+    ]
+  },
+  {
+    "stem": "query03_kdtree",
+    "query": "query_03.jpg",
+    "genus": "Populus",
+    "backend": "kdtree",
+    "top": [
+      [
+        "tree_0064.jpg",
+        "Populus",
+        0.6988
+      ],
+      [
+        "tree_0088.jpg",
+        "Populus",
+        0.6607
+      ],
+      [
+        "tree_0089.jpg",
+        "Populus",
+        0.6528
+      ],
+      [
+        "tree_0016.jpg",
+        "Populus",
+        0.651
+      ],
+      [
+        "tree_0029.jpg",
+        "Populus",
+        0.6391
+      ]
+    ]
+  },
+  {
+    "stem": "query04_kmeans",
+    "query": "query_04.jpg",
+    "genus": "Betula",
+    "backend": "kmeans",
+    "top": [
+      [
+        "tree_0130.jpg",
+        "Betula",
+        0.6219
+      ],
+      [
+        "tree_0584.jpg",
+        "",
+        0.6192
+      ],
+      [
+        "tree_0077.jpg",
+        "Betula",
+        0.6077
+      ],
+      [
+        "tree_0078.jpg",
+        "Populus",
+        0.5938
+      ],
+      [
+        "tree_0602.jpg",
+        "Ficus",
+        0.5898
+      ]
+    ]
+  }
+]
