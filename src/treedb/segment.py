@@ -4,9 +4,13 @@ Y tuong (slide bai 11, tr.17): tach rieng "vat the" va "hinh nen" de xay dung bi
 va trich rut dac trung hinh dang cua vat the.
 
 Thuat toan:
-  1. GrabCut khoi tao bang hinh chu nhat trung tam (cay luon nam giua anh theo yeu cau bo du lieu).
-  2. Loai bo bau troi (pixel sang, bao hoa thap, hoac xanh lam) khoi foreground.
-  3. Loc hinh thai (dong / mo), giu thanh phan lien thong lon va gan tam anh nhat, lap lo trong.
+  1. Phan doan ngu nghia bang SegFormer-b0 (ADE20K, lop "tree") - module segformer.py. Mo hinh hoc san biet
+     "cay" la gi nen tach duoc ca tan la cung mau voi co nen, cay trui la, anh den trang, tan cham mep anh.
+  2. Du phong khi khong co model (hoac model khong thay cay): GrabCut khoi tao bang hinh chu nhat trung tam.
+  3. (Chi voi GrabCut) loai bo bau troi (pixel sang, bao hoa thap, hoac xanh lam) khoi foreground.
+  4. Loc hinh thai (dong / mo), giu thanh phan lien thong lon va gan tam anh nhat (bo cac cay o hau canh),
+     lap lo trong (khe troi giua cac canh) -> mat na "hinh bao" cua cay.
+  5. Mat na chu nhat mac dinh chi la phuong an cuoi; ten phuong an duoc tra ve de thong ke.
 """
 from __future__ import annotations
 
@@ -14,9 +18,11 @@ import cv2
 import numpy as np
 from scipy import ndimage
 
+from . import segformer
+
 WORK_SIZE = 256          # kich thuoc lam viec cua GrabCut (tang toc)
 GRABCUT_ITERS = 5
-MIN_COVERAGE = 0.02      # neu mask qua nho -> dung mask chu nhat mac dinh
+MIN_COVERAGE = 0.02      # mask nho hon -> phuong an tiep theo
 
 
 def _default_mask(h: int, w: int) -> np.ndarray:
@@ -25,31 +31,28 @@ def _default_mask(h: int, w: int) -> np.ndarray:
     return m
 
 
-def foreground_mask(rgb: np.ndarray) -> np.ndarray:
-    """rgb: uint8 HxWx3  ->  mask bool HxW (True = cay)."""
-    h, w = rgb.shape[:2]
-    scale = WORK_SIZE / max(h, w)
-    small = cv2.resize(rgb, (max(8, int(w * scale)), max(8, int(h * scale))), interpolation=cv2.INTER_AREA)
-    sh, sw = small.shape[:2]
-    bgr = cv2.cvtColor(small, cv2.COLOR_RGB2BGR)
-
-    mask = np.zeros((sh, sw), np.uint8)
-    rect = (int(sw * 0.08), int(sh * 0.04), int(sw * 0.84), int(sh * 0.92))
-    bgd = np.zeros((1, 65), np.float64)
-    fgd = np.zeros((1, 65), np.float64)
-    try:
-        cv2.grabCut(bgr, mask, rect, bgd, fgd, GRABCUT_ITERS, cv2.GC_INIT_WITH_RECT)
-        fg = np.isin(mask, (cv2.GC_FGD, cv2.GC_PR_FGD)).astype(np.uint8)
-    except cv2.error:
-        fg = np.zeros((sh, sw), np.uint8)
-        fg[rect[1]:rect[1] + rect[3], rect[0]:rect[0] + rect[2]] = 1
-
+def _sky(small: np.ndarray) -> np.ndarray:
     hsv = cv2.cvtColor(small, cv2.COLOR_RGB2HSV)
     hh, ss, vv = hsv[..., 0], hsv[..., 1], hsv[..., 2]
     sky_white = (ss < 40) & (vv > 170)
     sky_blue = (hh > 90) & (hh < 130) & (ss > 40) & (vv > 120)
-    fg[sky_white | sky_blue] = 0
+    return sky_white | sky_blue
 
+
+def _grabcut(bgr: np.ndarray, mask: np.ndarray, rect, mode: int) -> np.ndarray:
+    bgd = np.zeros((1, 65), np.float64)
+    fgd = np.zeros((1, 65), np.float64)
+    try:
+        cv2.grabCut(bgr, mask, rect, bgd, fgd, GRABCUT_ITERS, mode)
+    except cv2.error:
+        return np.zeros(mask.shape, np.uint8)
+    return np.isin(mask, (cv2.GC_FGD, cv2.GC_PR_FGD)).astype(np.uint8)
+
+
+def _clean(fg: np.ndarray, sky: np.ndarray) -> np.ndarray:
+    fg = fg.copy()
+    fg[sky] = 0
+    sh, sw = fg.shape
     k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
     fg = cv2.morphologyEx(fg, cv2.MORPH_CLOSE, k, iterations=2)
     fg = cv2.morphologyEx(fg, cv2.MORPH_OPEN, k, iterations=1)
@@ -65,12 +68,31 @@ def foreground_mask(rgb: np.ndarray) -> np.ndarray:
             if score > best_score:
                 best, best_score = i, score
         fg = (lab == best).astype(np.uint8)
+    return ndimage.binary_fill_holes(fg.astype(bool))
 
-    fg = ndimage.binary_fill_holes(fg.astype(bool))
+
+def foreground_mask(rgb: np.ndarray, return_method: bool = False):
+    """rgb: uint8 HxWx3  ->  mask bool HxW (True = cay); return_method=True -> (mask, ten phuong an)."""
+    h, w = rgb.shape[:2]
+    scale = WORK_SIZE / max(h, w)
+    small = cv2.resize(rgb, (max(8, int(w * scale)), max(8, int(h * scale))), interpolation=cv2.INTER_AREA)
+    sh, sw = small.shape[:2]
+    bgr = cv2.cvtColor(small, cv2.COLOR_RGB2BGR)
+    sky = _sky(small)
+    rect = (int(sw * 0.08), int(sh * 0.04), int(sw * 0.84), int(sh * 0.92))
+
+    fg, method = None, ""
+    if segformer.is_available():
+        tree = cv2.resize(segformer.tree_mask(rgb).astype(np.uint8), (sw, sh), interpolation=cv2.INTER_NEAREST)
+        fg, method = _clean(tree, np.zeros_like(sky)), "segformer"   # model da tach troi, khong loc mau
+    if fg is None or fg.mean() < MIN_COVERAGE:
+        fg = _clean(_grabcut(bgr, np.zeros((sh, sw), np.uint8), rect, cv2.GC_INIT_WITH_RECT), sky)
+        method = "grabcut"
     if fg.mean() < MIN_COVERAGE:
-        return _default_mask(h, w)
-    full = cv2.resize(fg.astype(np.uint8), (w, h), interpolation=cv2.INTER_NEAREST)
-    return full.astype(bool)
+        mask, method = _default_mask(h, w), "default_rect"
+    else:
+        mask = cv2.resize(fg.astype(np.uint8), (w, h), interpolation=cv2.INTER_NEAREST).astype(bool)
+    return (mask, method) if return_method else mask
 
 
 def mask_bbox(mask: np.ndarray) -> tuple[int, int, int, int]:

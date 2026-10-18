@@ -6,29 +6,29 @@
     "backend": "linear",
     "top": [
       [
-        "tree_0057.jpg",
-        "Juglans",
-        0.5824
-      ],
-      [
-        "tree_0165.jpg",
-        "Betula",
-        0.5778
+        "tree_0372.jpg",
+        "",
+        0.5664
       ],
       [
         "tree_0198.jpg",
         "Populus",
-        0.5765
+        0.5603
       ],
       [
-        "tree_0028.jpg",
+        "tree_0068.jpg",
+        "Juglans",
+        0.5583
+      ],
+      [
+        "tree_0428.jpg",
+        "",
+        0.5572
+      ],
+      [
+        "tree_0029.jpg",
         "Populus",
-        0.5764
-      ],
-      [
-        "tree_0261.jpg",
-        "Quercus",
-        0.576
+        0.5557
       ]
     ]
   },
@@ -41,27 +41,27 @@
       [
         "tree_0034.jpg",
         "Alnus",
-        0.6304
-      ],
-      [
-        "tree_0181.jpg",
-        "Quercus",
-        0.5947
+        0.66
       ],
       [
         "tree_0192.jpg",
         "Quercus",
-        0.5927
+        0.6301
       ],
       [
-        "tree_0087.jpg",
-        "Juglans",
-        0.5853
+        "tree_0518.jpg",
+        "Aesculus",
+        0.6181
       ],
       [
         "tree_0285.jpg",
         "Quercus",
-        0.5801
+        0.6163
+      ],
+      [
+        "tree_0105.jpg",
+        "Quercus",
+        0.6143
       ]
     ]
   },
@@ -74,27 +74,27 @@
       [
         "tree_0064.jpg",
         "Populus",
-        0.6988
-      ],
-      [
-        "tree_0088.jpg",
-        "Populus",
-        0.6607
+        0.715
       ],
       [
         "tree_0089.jpg",
         "Populus",
-        0.6528
+        0.674
       ],
       [
         "tree_0016.jpg",
         "Populus",
-        0.651
+        0.6474
       ],
       [
-        "tree_0029.jpg",
+        "tree_0088.jpg",
         "Populus",
-        0.6391
+        0.6366
+      ],
+      [
+        "tree_0002.jpg",
+        "Populus",
+        0.6343
       ]
     ]
   },
@@ -107,27 +107,27 @@
       [
         "tree_0130.jpg",
         "Betula",
-        0.6219
+        0.6342
       ],
       [
-        "tree_0584.jpg",
+        "tree_0030.jpg",
+        "Populus",
+        0.5969
+      ],
+      [
+        "tree_0038.jpg",
+        "Quercus",
+        0.5851
+      ],
+      [
+        "tree_0533.jpg",
         "",
-        0.6192
-      ],
-      [
-        "tree_0077.jpg",
-        "Betula",
-        0.6077
+        0.5781
       ],
       [
         "tree_0078.jpg",
         "Populus",
-        0.5938
-      ],
-      [
-        "tree_0602.jpg",
-        "Ficus",
-        0.5898
+        0.5769
       ]
     ]
   }

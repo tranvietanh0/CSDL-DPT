@@ -53,7 +53,7 @@ python scripts/build_index.py
 
 1. Bấm **Upload**, chọn file `.jpg`, `.jpeg` hoặc `.png` (ảnh chụp ngang, một cây nằm giữa khung cho kết quả tốt nhất).
 2. Bấm **Tìm kiếm**.
-3. Đợi khoảng 0,5–1 giây (bước phân đoạn GrabCut chiếm phần lớn thời gian).
+3. Đợi khoảng 0,7–1,0 giây (bước phân đoạn SegFormer và trích rút đặc trưng chiếm phần lớn thời gian).
 
 Ảnh không vuông sẽ được thu nhỏ theo cạnh ngắn và cắt giữa về 512×512 giống ảnh trong CSDL.
 Mười ảnh thử không nằm trong CSDL có sẵn ở `data/queries/` để dùng ngay.

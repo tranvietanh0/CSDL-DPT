@@ -4,12 +4,15 @@
 
 Cong kiem soat chat luong (quality gate) sau phan doan: anh chi duoc dua vao CSDL khi
   0.04 <= ti le vung cay <= 0.90  va  tam vung cay lech khoi tam anh <= 30% (moi truc)
+  va phan doan tim thay cay (khong phai mat na chu nhat mac dinh)
 -> dam bao "moi anh gom 1 cay hoan chinh nam giua anh". Anh bi loai ghi o results/excluded_images.csv.
 """
 from __future__ import annotations
 
 import argparse
 import csv
+import json
+from collections import Counter
 import multiprocessing as mp
 import sys
 import time
@@ -24,19 +27,20 @@ from treedb.segment import foreground_mask  # noqa: E402
 HANDCRAFTED = ["color", "shape", "texture"]
 GATE_COVERAGE = (0.04, 0.90)
 GATE_OFFSET = 0.30
+NO_TREE = "default_rect"
 
 
 def _work(filename: str):
     rgb = load_rgb(config.IMG_DIR / filename)
-    mask = foreground_mask(rgb)
+    mask, method = foreground_mask(rgb, return_method=True)
     feats = extract_all(rgb, mask, sets=HANDCRAFTED)
     region = feats["shape"][0][:10]
-    return (filename, float(mask.mean()), (float(region[8]), float(region[9])),
+    return (filename, float(mask.mean()), (float(region[8]), float(region[9])), method,
             {s: v for s, (v, _) in feats.items()}, {s: lay for s, (_, lay) in feats.items()})
 
 
-def passes_gate(cov: float, off: tuple[float, float]) -> bool:
-    return GATE_COVERAGE[0] <= cov <= GATE_COVERAGE[1] and abs(off[0]) <= GATE_OFFSET and abs(off[1]) <= GATE_OFFSET
+def passes_gate(cov: float, off: tuple[float, float], method: str) -> bool:
+    return method != NO_TREE and GATE_COVERAGE[0] <= cov <= GATE_COVERAGE[1] and abs(off[0]) <= GATE_OFFSET and abs(off[1]) <= GATE_OFFSET
 
 
 def main():
@@ -59,8 +63,8 @@ def main():
     layouts: dict = {}
     done = 0
     with mp.Pool(args.workers) as pool:
-        for filename, cov, off, feats, lays in pool.imap(_work, filenames, chunksize=4):
-            extracted[filename] = (cov, off, feats)
+        for filename, cov, off, method, feats, lays in pool.imap(_work, filenames, chunksize=4):
+            extracted[filename] = (cov, off, feats, method)
             layouts.update(lays)
             done += 1
             if done % 100 == 0 or done == len(filenames):
@@ -69,15 +73,19 @@ def main():
 
     kept, excluded = [], []
     for fn in filenames:
-        cov, off, _ = extracted[fn]
-        (kept if args.no_gate or passes_gate(cov, off) else excluded).append((fn, cov, off))
+        cov, off, _, method = extracted[fn]
+        (kept if args.no_gate or passes_gate(cov, off, method) else excluded).append((fn, cov, off))
     config.RESULTS_DIR.mkdir(exist_ok=True)
     with open(config.RESULTS_DIR / "excluded_images.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["filename", "fg_coverage", "dx", "dy", "reason"])
         for fn, cov, off in excluded:
-            reason = "coverage" if not (GATE_COVERAGE[0] <= cov <= GATE_COVERAGE[1]) else "off-center"
+            reason = ("no-tree" if extracted[fn][3] == NO_TREE
+                      else "coverage" if not (GATE_COVERAGE[0] <= cov <= GATE_COVERAGE[1]) else "off-center")
             w.writerow([fn, f"{cov:.4f}", f"{off[0]:.3f}", f"{off[1]:.3f}", reason])
+    seg = Counter(extracted[fn][3] for fn in filenames)
+    (config.RESULTS_DIR / "segmentation_stats.json").write_text(json.dumps(dict(seg), indent=2), encoding="utf-8")
+    print(f"[seg] phuong an phan doan: {dict(seg)}", flush=True)
     print(f"[gate] giu {len(kept)} anh, loai {len(excluded)} anh (results/excluded_images.csv)", flush=True)
     if len(kept) < config.MIN_IMAGES:
         print(f"[WARN] sau cong kiem soat con {len(kept)} < {config.MIN_IMAGES} anh", flush=True)

@@ -94,7 +94,7 @@ def plot_segmentation_examples(out, filenames: list[str]):
         axes[1, j].set_title(f"vùng cây = {m.mean():.1%}", fontsize=8)
         for ax in axes[:, j]:
             ax.axis("off")
-    fig.suptitle("Phân đoạn vật thể (GrabCut + loại bầu trời): ảnh gốc (trên) và vùng cây (dưới, đỏ)")
+    fig.suptitle("Phân đoạn vật thể (SegFormer, lớp tree + lọc hình thái): ảnh gốc (trên) và vùng cây (dưới, đỏ)")
     fig.tight_layout()
     return _save(fig, out)
 
@@ -127,7 +127,7 @@ def plot_block_diagram(out):
     y = 0.70
     _box(ax, 0.03, y, 0.15, 0.13, "1. Thu thập ảnh\n(Wikimedia Commons,\nlọc theo quy tắc)")
     _box(ax, 0.22, y, 0.15, 0.13, "2. Tiền xử lý\n(EXIF, RGB, resize,\ncenter-crop 512×512,\nkhử trùng lặp)")
-    _box(ax, 0.41, y, 0.15, 0.13, "3. Phân đoạn\nvật thể / nền\n(GrabCut, loại trời)")
+    _box(ax, 0.41, y, 0.15, 0.13, "3. Phân đoạn\nvật thể / nền\n(SegFormer,\ndự phòng GrabCut)")
     _box(ax, 0.60, y, 0.17, 0.13, "4. Trích rút đặc trưng\nMàu (369) · Hình dạng (113)\nKết cấu (85) · Embedding (1280)")
     _box(ax, 0.81, y, 0.16, 0.13, "5. CSDL SQLite\nimages · feature_sets\nfeatures · feature_stats", fc="#fff2cc",
          ec="#b8860b")
