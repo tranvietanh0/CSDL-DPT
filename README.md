@@ -5,6 +5,7 @@ trích rút nhiều bộ đặc trưng (màu sắc, hình dạng, kết cấu/b�
 SQLite và tìm 5 ảnh giống nhất với một ảnh cây mới.
 
 Báo cáo đầy đủ: `docs/BaoCao_HeCSDL_AnhCay.docx` / `docs/BaoCao_HeCSDL_AnhCay.pdf`.
+Báo cáo 1 (nội dung 1 và 2, hạn 22/10/2026): `docs/BaoCao1_Nhom27_NoiDung1-2.docx` / `.pdf`.
 Hướng dẫn dùng demo web: `docs/HUONG_DAN_DEMO.md`.
 
 ## Cấu trúc
@@ -13,7 +14,7 @@ Hướng dẫn dùng demo web: `docs/HUONG_DAN_DEMO.md`.
 data/images/          ảnh CSDL đã chuẩn hoá 512×512 (cây nằm giữa ảnh)      data/manifest.csv
 data/queries/         10 ảnh truy vấn thử (không nằm trong CSDL)              data/queries.csv
 db/tree_features.sqlite   CSDL đặc trưng (images, feature_sets, features, feature_stats, indexes, ...)
-src/treedb/           mã nguồn: collect, preprocess, segment, features/{color,shape,texture,deep}, db, index, search, evaluate, visualize
+src/treedb/           mã nguồn: collect, preprocess, segment, segformer, features/{color,shape,texture,deep}, db, index, search, evaluate, analysis, visualize
 scripts/              build_dataset → extract_features → build_index → run_evaluation → make_figures → build_docs; query.py
 app/streamlit_app.py  demo giao diện web
 results/              evaluation.json, index_meta.json, query_examples/
@@ -29,11 +30,16 @@ python scripts/build_dataset.py        # 1. sưu tầm (Wikimedia Commons) + chu
 python scripts/extract_features.py     # 2-3. phân đoạn, trích rút đặc trưng, ghi CSDL SQLite
 python scripts/build_index.py          # 3b. chỉ mục kd-tree (PCA) + phân cụm K-means
 python scripts/run_evaluation.py       # 4c. đánh giá leave-one-out (P@5, mAP, so sánh backend)
+python scripts/analyze_features.py      # 2. phân tích giá trị thông tin đặc trưng (Fisher, 1-NN), hình 15-16
 python scripts/make_figures.py         # hình minh hoạ + ví dụ truy vấn
 python scripts/build_docs.py           # sinh báo cáo docx + pdf
+python scripts/build_report1.py         # Báo cáo 1 (nội dung 1, 2) docx + pdf
 
 python scripts/query.py --image data/queries/query_01.jpg --backend linear --fig out.png   # truy vấn 1 ảnh
 streamlit run app/streamlit_app.py                                                            # demo web
 ```
 
 Bộ dữ liệu, CSDL và kết quả đánh giá đã được sinh sẵn trong repo, có thể chạy thẳng bước truy vấn / demo.
+Lần chạy đầu cần Internet để tải các model vào thư mục `models/`: MobileNetV2 (≈14 MB) và SegFormer-b0 (≈15 MB).
+Nếu không tải được, hệ thống vẫn chạy với 3 bộ đặc trưng thủ công (màu, hình dạng, kết cấu); phần phân đoạn
+tự động chuyển sang phương án dự phòng GrabCut.
