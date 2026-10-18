@@ -90,7 +90,16 @@ class Report:
                 para.add_run(it)
 
     def numbered(self, items: list[str]):
+        """Moi danh sach danh so lai tu 1 (mac dinh Word noi tiep so giua cac danh sach cung style)."""
+        numbering = self.doc.part.numbering_part.numbering_definitions._numbering
+        style_num = self.doc.styles["List Number"].element.pPr.numPr.numId.val
+        num = numbering.add_num(numbering.num_having_numId(style_num).abstractNumId.val)
+        num.add_lvlOverride(ilvl=0).add_startOverride(1)
         self.bullets(items, style="List Number")
+        for para in self.doc.paragraphs[-len(items):]:
+            numpr = para._p.get_or_add_pPr().get_or_add_numPr()
+            numpr.get_or_add_ilvl().val = 0
+            numpr.get_or_add_numId().val = num.numId
 
     def code(self, text: str, size=9.5):
         for line in text.rstrip("\n").split("\n"):

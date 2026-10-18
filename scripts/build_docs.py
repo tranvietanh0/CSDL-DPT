@@ -17,11 +17,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from docx_helpers import Report  # noqa: E402
+from report_analysis_sections import sec_example, sec_info_value, sec_quant_dataset  # noqa: E402
 from treedb import config, db  # noqa: E402
 
 FIG = config.FIG_DIR
 OUT_DOCX = config.ROOT / "docs" / "BaoCao_HeCSDL_AnhCay.docx"
 SOFFICE = Path(r"C:\Program Files\LibreOffice\program\soffice.exe")
+GROUP = {"name": "Nhóm 27", "class": "D23 – Lớp 2",
+         "members": [("Nguyễn Văn Đăng", "B23DCCN119"), ("Trịnh Anh Tú", "B23DCCN876"), ("Trần Việt Anh", "B23DCCN050")]}
 
 
 # ---------------------------------------------------------------------------------------
@@ -52,6 +55,10 @@ def load_context() -> dict:
     ctx["feature_sets"] = db.list_feature_sets(conn)
     ctx["images"] = db.list_images(conn)
     conn.close()
+    seg = config.RESULTS_DIR / "segmentation_stats.json"
+    ctx["seg_stats"] = json.loads(seg.read_text(encoding="utf-8")) if seg.exists() else {}
+    fa = config.RESULTS_DIR / "feature_analysis.json"
+    ctx["feature_analysis"] = json.loads(fa.read_text(encoding="utf-8")) if fa.exists() else None
     ctx["index_meta"] = json.loads((config.RESULTS_DIR / "index_meta.json").read_text(encoding="utf-8"))
     ctx["eval"] = json.loads((config.RESULTS_DIR / "evaluation.json").read_text(encoding="utf-8"))
     qex = config.RESULTS_DIR / "query_examples"
@@ -73,22 +80,26 @@ def f3(x: float) -> str:
 # ---------------------------------------------------------------------------------------
 # Cac phan cua bao cao
 # ---------------------------------------------------------------------------------------
-def cover(r: Report, ctx: dict):
+def cover(r: Report, ctx: dict, title: str = "BÁO CÁO BÀI TẬP LỚN", note: str = ""):
     r.p("HỌC VIỆN CÔNG NGHỆ BƯU CHÍNH VIỄN THÔNG", bold=True, align="center", size=14)
     r.p("KHOA CÔNG NGHỆ THÔNG TIN", bold=True, align="center", size=13)
     for _ in range(5):
         r.p()
-    r.p("BÁO CÁO BÀI TẬP LỚN", bold=True, align="center", size=16)
+    r.p(title, bold=True, align="center", size=16)
     r.p("MÔN HỌC: HỆ CƠ SỞ DỮ LIỆU ĐA PHƯƠNG TIỆN", bold=True, align="center", size=14)
     r.p()
     r.p("ĐỀ TÀI", align="center", size=13)
     r.p("XÂY DỰNG HỆ CSDL LƯU TRỮ VÀ TÌM KIẾM ẢNH CÂY THÂN GỖ THEO NỘI DUNG", bold=True, align="center", size=16)
-    for _ in range(5):
+    if note:
+        r.p(note, italic=True, align="center", size=12)
+    for _ in range(3):
         r.p()
     r.p("Giảng viên hướng dẫn: Nguyễn Đình Hóa", align="center", size=13)
-    r.p("Sinh viên thực hiện: ……………………………………", align="center", size=13)
-    r.p("Mã sinh viên: ……………………   Lớp: ……………………", align="center", size=13)
-    for _ in range(4):
+    r.p(f"{GROUP['name']} – {GROUP['class']}", bold=True, align="center", size=13)
+    r.table(["STT", "Họ và tên", "Mã sinh viên"],
+            [[str(i), n, m] for i, (n, m) in enumerate(GROUP["members"], 1)], widths=[1.5, 6, 4],
+            align_center_cols={0, 2})
+    for _ in range(2):
         r.p()
     r.p("Hà Nội, 2026", align="center", size=13)
     r.page_break()
@@ -98,14 +109,17 @@ def toc(r: Report):
     r.h(1, "MỤC LỤC")
     items = [
         "1. Giới thiệu bài toán và phạm vi thực hiện",
-        "2. Xây dựng bộ dữ liệu ảnh cây thân gỗ (Yêu cầu 1)",
-        "3. Các bộ đặc trưng nhận diện cây (Yêu cầu 2)",
-        "4. Trích rút đặc trưng và hệ CSDL quản trị đặc trưng (Yêu cầu 3)",
-        "5. Hệ thống tìm kiếm ảnh tương đồng (Yêu cầu 4)",
+        "2. Xây dựng bộ dữ liệu ảnh cây thân gỗ (Nội dung 1)",
+        "    2.5. Định lượng điểm giống và khác nhau theo chi cây",
+        "3. Các bộ đặc trưng nhận diện cây (Nội dung 2)",
+        "    3.6. Đánh giá định lượng giá trị thông tin của các đặc trưng",
+        "    3.7. Ví dụ minh hoạ: đặc trưng tìm sự tương đồng và sự khác biệt",
+        "4. Trích rút đặc trưng và hệ CSDL quản trị đặc trưng (Nội dung 3)",
+        "5. Hệ thống tìm kiếm ảnh tương đồng (Nội dung 4)",
         "    5.1. Sơ đồ khối, chức năng và dữ liệu vào/ra của từng khối; quy trình thực hiện",
         "    5.2. Minh hoạ kết quả trung gian của quá trình truy vấn",
         "    5.3. Đánh giá kết quả",
-        "6. Demo hệ thống (Yêu cầu 5)",
+        "6. Demo hệ thống (Nội dung 5)",
         "7. Kết luận và hướng phát triển",
         "Phụ lục A. Cấu trúc mã nguồn và hướng dẫn chạy",
         "Phụ lục B. Trích danh sách nguồn ảnh",
@@ -153,7 +167,7 @@ def sec_intro(r: Report, ctx: dict):
     r.table(["Thành phần", "Công nghệ / thư viện", "Vai trò"], [
         ["Sưu tầm ảnh", "MediaWiki API (Wikimedia Commons), urllib", "Duyệt category, lấy siêu dữ liệu, tải ảnh"],
         ["Tiền xử lý", "Pillow, NumPy, OpenCV (pHash)", "Chuẩn hoá kích thước, khử trùng lặp"],
-        ["Phân đoạn", "OpenCV GrabCut, SciPy ndimage", "Tách vùng cây / nền"],
+        ["Phân đoạn", "SegFormer-b0 ADE20K (ONNX), OpenCV GrabCut, SciPy", "Tách vùng cây / nền"],
         ["Đặc trưng thủ công", "OpenCV, scikit-image", "Màu sắc, hình dạng, kết cấu/bố cục"],
         ["Đặc trưng sâu", "ONNX Runtime + MobileNetV2 (ImageNet)", "Embedding 1280 chiều"],
         ["CSDL đặc trưng", "SQLite (sqlite3)", "Bảng quan hệ + vector BLOB + chỉ mục"],
@@ -164,11 +178,11 @@ def sec_intro(r: Report, ctx: dict):
     ], widths=[3.5, 6.0, 6.5], caption="Công nghệ sử dụng")
 
 
-def sec_dataset(r: Report, ctx: dict):
+def sec_dataset(r: Report, ctx: dict, seg_ref: str = "mục 4.2"):
     rows = ctx["manifest"]
     imgs = ctx["images"]
     n_db = ctx["db"]["images"]
-    r.h(1, "2. Xây dựng bộ dữ liệu ảnh cây thân gỗ (Yêu cầu 1)")
+    r.h(1, "2. Xây dựng bộ dữ liệu ảnh cây thân gỗ (Nội dung 1)")
     r.h(2, "2.1. Tiêu chí của bộ dữ liệu")
     r.bullets([
         ("Đối tượng: ", "cây thân gỗ trưởng thành (cây gỗ lớn, cây lá rộng hoặc lá kim), loại trừ cây cọ/dừa "
@@ -209,8 +223,9 @@ def sec_dataset(r: Report, ctx: dict):
         "cảnh, chủ thể là công trình/người, rừng ngập mặn…). Danh sách loại được lưu theo tiêu đề nguồn trong "
         "data/manual_exclude.csv để quy trình có thể tái lập.",
         f"Tách {len(ctx['queries'])} ảnh có nhãn chi làm ảnh truy vấn thử (data/queries, không đưa vào CSDL).",
-        f"Cổng kiểm soát chất lượng tự động sau phân đoạn (mục 4.2): chỉ nhận ảnh có tỉ lệ vùng cây trong "
-        f"[4%, 90%] và tâm vùng cây lệch tâm ảnh không quá 30% mỗi trục → loại thêm {len(ctx['gate_excluded'])} ảnh.",
+        f"Cổng kiểm soát chất lượng tự động sau phân đoạn ({seg_ref}): chỉ nhận ảnh phân đoạn tìm thấy cây, có tỉ "
+        f"lệ vùng cây trong [4%, 90%] và tâm vùng cây lệch tâm ảnh không quá 30% mỗi trục → loại thêm "
+        f"{len(ctx['gate_excluded'])} ảnh.",
         f"Kết quả: {n_db} ảnh trong CSDL (đạt yêu cầu ≥ {config.MIN_IMAGES} ảnh).",
     ]
     r.numbered(steps)
@@ -276,10 +291,13 @@ def sec_dataset(r: Report, ctx: dict):
                                "nhật cơ bản để giảm ảnh hưởng này."),
     ])
 
+    if ctx.get("feature_analysis"):
+        sec_quant_dataset(r, ctx["feature_analysis"], "2.5")
 
-def sec_features(r: Report, ctx: dict):
+
+def sec_features(r: Report, ctx: dict, seg_ref: str = "mục 4.2", with_analysis: bool = True):
     fs = {f["set_name"]: f for f in ctx["feature_sets"]}
-    r.h(1, "3. Các bộ đặc trưng nhận diện cây (Yêu cầu 2)")
+    r.h(1, "3. Các bộ đặc trưng nhận diện cây (Nội dung 2)")
     r.h(2, "3.1. Định hướng thiết kế")
     r.p("Theo lý thuyết truy vấn ảnh dựa trên nội dung, ảnh được mô tả bằng các thuộc tính bậc thấp: màu sắc "
         "(của vật thể và của nền), hình dạng/kích thước vật thể, và bố cục/kết cấu (độ thô, độ tương phản, hướng "
@@ -322,7 +340,7 @@ def sec_features(r: Report, ctx: dict):
         "đồ); giá trị 0 khi hai phân bố màu trùng nhau và tối đa 2 cho mỗi biểu đồ khi không có màu chung.")
 
     r.h(2, "3.3. Bộ đặc trưng 2 – Hình dạng tán/thân cây (113 chiều, độ đo L2)")
-    r.p("Đặc trưng hình dạng được tính trên mặt nạ nhị phân của vật thể (mục 4.2) và được thiết kế để ít phụ thuộc "
+    r.p(f"Đặc trưng hình dạng được tính trên mặt nạ nhị phân của vật thể ({seg_ref}) và được thiết kế để ít phụ thuộc "
         "vào vị trí, kích thước và (một phần) góc quay của cây trong ảnh:")
     r.table(["Khối", "Chiều", "Cách tính", "Giá trị thông tin"], [
         ["region", "10", "Diện tích tương đối; tỉ lệ cao/rộng của hình chữ nhật cơ bản; extent (diện tích/hình "
@@ -367,12 +385,15 @@ def sec_features(r: Report, ctx: dict):
         "Pooling (1280 chiều, trước lớp phân loại) và chuẩn hoá L2. Độ tương đồng cosine giữa hai embedding phản "
         "ánh sự giống nhau về hình thái tổng thể mà mạng đã học từ hàng triệu ảnh tự nhiên. Đây là đặc trưng tuỳ "
         "chọn: nếu không có model, hệ thống vẫn hoạt động với ba bộ thủ công.")
+    if with_analysis and ctx.get("feature_analysis"):
+        sec_info_value(r, ctx["feature_analysis"], "3.6")
+        sec_example(r, ctx["feature_analysis"], "3.7")
 
 
 def sec_extraction_db(r: Report, ctx: dict):
     dbs = ctx["db"]
     im = ctx["index_meta"]
-    r.h(1, "4. Trích rút đặc trưng và hệ CSDL quản trị đặc trưng (Yêu cầu 3)")
+    r.h(1, "4. Trích rút đặc trưng và hệ CSDL quản trị đặc trưng (Nội dung 3)")
     r.h(2, "4.1. Quy trình trích rút")
     r.p("Script scripts/extract_features.py duyệt toàn bộ ảnh trong data/manifest.csv; với mỗi ảnh: đọc và chuẩn "
         "hoá (giống hệt cách áp dụng cho ảnh truy vấn) → phân đoạn vật thể → tính ba bộ đặc trưng thủ công (chạy "
@@ -380,12 +401,24 @@ def sec_extraction_db(r: Report, ctx: dict):
         "từng bộ. Thời gian trích rút trung bình khoảng 0,1 giây/ảnh cho ba bộ thủ công (đã song song hoá) và "
         "0,02 giây/ảnh cho embedding.")
     r.h(2, "4.2. Phân đoạn vật thể / nền")
-    r.p("Vì đề bài đảm bảo cây nằm giữa ảnh, mặt nạ vùng cây được tính bằng thuật toán GrabCut khởi tạo với hình "
-        "chữ nhật trung tâm (chiếm 84% bề rộng, 92% chiều cao) trên ảnh thu nhỏ 256 px (5 vòng lặp). Sau đó loại "
-        "các điểm ảnh bầu trời (sáng và bão hoà thấp, hoặc sắc độ xanh lam), lọc hình thái đóng/mở, giữ thành phần "
-        "liên thông có diện tích lớn và gần tâm ảnh nhất, lấp lỗ. Nếu mặt nạ quá nhỏ (< 2%) dùng mặt nạ chữ nhật "
-        "mặc định. Kết quả được dùng cho biểu đồ màu vật thể/nền, toàn bộ bộ hình dạng và bộ kết cấu; đồng thời "
-        "làm cổng kiểm soát chất lượng (tỉ lệ vùng cây và độ lệch tâm) như mô tả ở mục 2.2.")
+    seg = ctx.get("seg_stats", {})
+    r.p("Mặt nạ vùng cây được tính bằng mô hình phân đoạn ngữ nghĩa SegFormer-b0 huấn luyện sẵn trên bộ ADE20K "
+        "(150 lớp, trong đó có lớp “tree”; định dạng ONNX ~15 MB, chạy bằng ONNX Runtime trên CPU, ~0,13 giây/ảnh). "
+        "Các điểm ảnh được gán lớp “tree” tạo thành mặt nạ thô, sau đó lọc hình thái đóng/mở, giữ thành phần liên "
+        "thông có diện tích lớn và gần tâm ảnh nhất (loại các cây ở hậu cảnh) và lấp lỗ (khe trời giữa các cành) "
+        "để được “hình bao” của cây. Phương án dự phòng khi không có model hoặc model không tìm thấy cây là thuật "
+        "toán GrabCut khởi tạo bằng hình chữ nhật trung tâm kèm loại điểm ảnh bầu trời theo màu; ảnh vẫn không tìm "
+        "được cây bị cổng kiểm soát chất lượng loại (mục 2.2)."
+        + (f" Thống kê trên {sum(seg.values())} ảnh trước cổng kiểm soát: SegFormer {seg.get('segformer', 0)}, GrabCut "
+           f"{seg.get('grabcut', 0)}, không tìm thấy cây {seg.get('default_rect', 0)}." if seg else ""))
+    r.p("Phiên bản đầu của hệ thống dùng GrabCut làm bước chính. Khi kiểm tra chéo đặc trưng (mục 3.6), nhóm phát "
+        "hiện 135/639 ảnh (21%) có vector hình dạng trùng hệt nhau: GrabCut lấy dải viền ảnh làm mẫu nền, nên khi "
+        "tán cây chạm mép ảnh hoặc viền có cỏ/cây cùng màu với tán, mô hình nền “học” luôn màu của cây và trả về "
+        "0% vật thể, hệ thống rơi về mặt nạ chữ nhật mặc định. GrabCut chỉ dựa vào màu nên không tách được tán lá "
+        "khỏi cỏ cùng màu; mô hình ngữ nghĩa đã học khái niệm “cây” nên xử lý tốt cả cây trụi lá, ảnh đen trắng và "
+        "tán chạm mép. Sau khi thay, độ chính xác P@5 của bộ hình dạng và của tổ hợp đặc trưng đều tăng.")
+    r.p("Mặt nạ được dùng cho biểu đồ màu vật thể/nền, toàn bộ bộ hình dạng và bộ kết cấu; đồng thời làm cổng "
+        "kiểm soát chất lượng (tỉ lệ vùng cây và độ lệch tâm) như mô tả ở mục 2.2.")
     r.figure(FIG / "03_segmentation.png", "Ví dụ phân đoạn vật thể: ảnh gốc (trên) và vùng cây được tách (dưới)", 16)
     r.h(2, "4.3. Lược đồ CSDL đặc trưng (SQLite)")
     r.p("Hệ CSDL theo mô hình lai: siêu dữ liệu quan hệ của ảnh lưu trong bảng thông thường để lọc chính xác "
@@ -445,7 +478,7 @@ def sec_extraction_db(r: Report, ctx: dict):
 def sec_search(r: Report, ctx: dict):
     ev = ctx["eval"]
     k = ev["k"]
-    r.h(1, "5. Hệ thống tìm kiếm ảnh tương đồng (Yêu cầu 4)")
+    r.h(1, "5. Hệ thống tìm kiếm ảnh tương đồng (Nội dung 4)")
     r.h(2, "5.1. Sơ đồ khối, chức năng và dữ liệu vào/ra của từng khối")
     r.figure(FIG / "04_block_diagram.png", "Sơ đồ khối hệ thống: giai đoạn ngoại tuyến (trên) và trực tuyến (dưới)",
              17)
@@ -454,7 +487,7 @@ def sec_search(r: Report, ctx: dict):
          "Danh sách category gốc", "Ảnh thô (JPEG) + raw_manifest.csv (nguồn, tác giả, giấy phép, chi)"],
         ["2. Tiền xử lý", "Xoay EXIF, RGB, resize cạnh ngắn 512, center-crop, khử trùng lặp pHash, áp dụng danh "
                           "sách kiểm duyệt, tách ảnh truy vấn thử", "Ảnh thô", "Ảnh 512×512 + manifest.csv, queries.csv"],
-        ["3. Phân đoạn", "GrabCut + loại trời + lọc hình thái", "Ảnh RGB 512×512", "Mặt nạ nhị phân vùng cây, tỉ lệ "
+        ["3. Phân đoạn", "SegFormer (lớp tree) + lọc hình thái; dự phòng GrabCut", "Ảnh RGB 512×512", "Mặt nạ nhị phân vùng cây, tỉ lệ "
                                                                                     "vùng cây, độ lệch tâm"],
         ["4. Trích rút đặc trưng", "Tính 4 bộ đặc trưng", "Ảnh + mặt nạ", "4 vector: màu (369), hình dạng (113), kết "
                                                                          "cấu (85), embedding (1280) + bố cục khối"],
@@ -587,8 +620,8 @@ def sec_search(r: Report, ctx: dict):
         f"màu sắc đạt {f3(fs['color']['p_at_k'])}, kết cấu {f3(fs['texture']['p_at_k'])}, hình dạng "
         f"{f3(fs['shape']['p_at_k'])}" + (f", embedding {f3(fs['deep']['p_at_k'])}" if "deep" in fs else "") + ".",
         f"Trong các đặc trưng thủ công, màu sắc mạnh nhất vì mùa/loại lá/bối cảnh gắn chặt với chi trong bộ dữ "
-        f"liệu (ví dụ thông luôn xanh sẫm, bạch dương thân trắng); hình dạng yếu nhất khi dùng riêng vì mặt nạ "
-        f"GrabCut còn lẫn nền và cùng một chi có nhiều dáng, nhưng bổ sung tốt khi kết hợp: ba bộ thủ công gộp lại "
+        f"liệu (ví dụ thông luôn xanh sẫm, bạch dương thân trắng); hình dạng yếu nhất khi dùng riêng vì "
+        f"cùng một chi có nhiều dáng (tuổi cây, cắt tỉa, gió) và hình bao chỉ là hình chiếu 2D, nhưng bổ sung tốt khi kết hợp: ba bộ thủ công gộp lại "
         f"đạt P@{k} = {f3(hc.get('p_at_k', 0))} (mAP {f3(hc.get('ap_at_k', 0))}), cao hơn từng bộ riêng lẻ.",
         f"Kết hợp cả bốn bộ với trọng số mặc định đạt P@{k} = {f3(comb.get('p_at_k', 0))}, P@1 = "
         f"{f3(comb.get('p_at_1', 0))}, mAP@{k} = {f3(comb.get('ap_at_k', 0))}; theo nhóm lá rộng/lá kim đạt "
@@ -601,16 +634,16 @@ def sec_search(r: Report, ctx: dict):
         f"{ev['n_database']} ảnh, quét tuyến tính vẫn chỉ mất ~{be['linear']['ms_per_query']:.0f} ms nên được dùng "
         "mặc định; chỉ mục phát huy tác dụng khi CSDL lớn hơn nhiều.",
         "Thời gian trả lời một truy vấn hoàn chỉnh (kể cả phân đoạn và trích rút) khoảng 0,5–1 giây trên CPU, "
-        "trong đó GrabCut chiếm phần lớn.",
-        "Hạn chế: nhãn chi tự động từ category có thể sai/thiếu; phân đoạn đôi khi gộp cỏ/đất vào vùng cây; các "
+        "trong đó phân đoạn SegFormer và trích rút đặc trưng chiếm phần lớn.",
+        "Hạn chế: nhãn chi tự động từ category có thể sai/thiếu; phân đoạn đôi khi gộp hàng cây hậu cảnh dính liền tán vào vùng cây; các "
         "đặc trưng thủ công nhạy với ánh sáng và mùa; embedding ImageNet không được huấn luyện riêng cho cây. "
         "Hướng cải thiện: tinh chỉnh mạng trên dữ liệu cây, học trọng số kết hợp từ phản hồi người dùng "
-        "(relevance feedback), dùng phân đoạn ngữ nghĩa thay GrabCut.",
+        "(relevance feedback), phân đoạn từng cây (instance segmentation) để tách cây chính khỏi hàng cây phía sau.",
     ])
 
 
 def sec_demo(r: Report, ctx: dict):
-    r.h(1, "6. Demo hệ thống (Yêu cầu 5)")
+    r.h(1, "6. Demo hệ thống (Nội dung 5)")
     r.p("Hệ thống có hai cách sử dụng: giao diện web Streamlit và dòng lệnh.")
     r.h(2, "6.1. Giao diện web")
     r.code("streamlit run app/streamlit_app.py")
@@ -643,7 +676,7 @@ def sec_conclusion(r: Report, ctx: dict):
         f"{comb.get('p_at_k', 0) / max(ev['random_baseline']['p_at_k'], 1e-9):.1f} lần ngẫu nhiên); (5) demo bằng "
         f"giao diện web và dòng lệnh.")
     r.p("Hướng phát triển: mở rộng bộ dữ liệu với nhãn loài do chuyên gia gán; áp dụng phản hồi liên quan để cập "
-        "nhật trọng số và vector truy vấn (công thức Rocchio); thay GrabCut bằng mô hình phân đoạn ngữ nghĩa; "
+        "nhật trọng số và vector truy vấn (công thức Rocchio); phân đoạn theo từng thể hiện cây (instance segmentation); "
         "tinh chỉnh mạng nơ-ron trên ảnh cây; triển khai CSDL vector (FAISS/pgvector) khi số ảnh lên hàng triệu.")
 
 
@@ -656,7 +689,9 @@ def appendix(r: Report, ctx: dict):
   src/treedb/config.py      cấu hình chung
   src/treedb/collect.py     sưu tầm ảnh (Wikimedia Commons API)
   src/treedb/preprocess.py  chuẩn hoá, khử trùng lặp, kiểm duyệt, tách ảnh truy vấn
-  src/treedb/segment.py     phân đoạn vật thể / nền (GrabCut)
+  src/treedb/segment.py     phân đoạn vật thể / nền (SegFormer, dự phòng GrabCut)
+  src/treedb/segformer.py   mô hình phân đoạn ngữ nghĩa SegFormer-b0 ADE20K (ONNX)
+  src/treedb/analysis.py    phân tích giá trị thông tin của đặc trưng (Fisher, 1-NN)
   src/treedb/features/      color.py, shape.py, texture.py, deep.py, __init__.py (extract_all)
   src/treedb/db.py          lược đồ và thao tác SQLite
   src/treedb/index.py       chuẩn hoá, khoảng cách, PCA, cây k-d, K-means
