@@ -25,16 +25,7 @@ OUT_DOCX = config.ROOT / "docs" / "BaoCao_HeCSDL_AnhCay.docx"
 SOFFICE = Path(r"C:\Program Files\LibreOffice\program\soffice.exe")
 GROUP = {"name": "Nhóm 27", "class": "D23 – Lớp 2",
          "members": [("Nguyễn Văn Đăng", "B23DCCN119"), ("Trịnh Anh Tú", "B23DCCN876"), ("Trần Việt Anh", "B23DCCN050")]}
-SEG_CUTOUT_TEXT = (
-    "Từ mặt nạ, ảnh tách nền được tạo như sau: lấy bản đồ lớp “tree” của SegFormer ở độ phân giải đầy đủ (nội suy "
-    "song tuyến hiệu số logit “tree” – logit lớn nhất của lớp khác lên 512×512 rồi lấy ngưỡng 0) để viền tán lá "
-    "mịn; chỉ giữ các điểm ảnh nằm trong lân cận 9 px của mặt nạ hình bao (bỏ cây hậu cảnh) và không có màu bầu "
-    "trời (bỏ khe trời giữa các cành của cây trụi lá); làm mềm viền bằng lọc Gauss σ = 1 px rồi ghép cây lên nền "
-    "trắng. Ảnh kết quả được lưu vào CSDL; ảnh truy vấn đi qua đúng các bước này. Hạn chế: mô hình xếp hàng rào cây "
-    "bụi hoặc hàng cây ở đường chân trời dính liền gốc cây vào lớp “tree” nên đôi khi còn sót một dải cây thấp ở "
-    "chân ảnh; với cây ngược sáng lúc hoàng hôn, khe trời màu cam giữa các cành có thể chưa bị loại hết.")
-SEG_FIG_CAPTION = ("Tách nền: ảnh chuẩn hoá (trên), mặt nạ hình bao của cây (giữa) và ảnh đã tách nền lưu trong "
-                   "CSDL (dưới)")
+SEG_FIG_CAPTION = "Ảnh chuẩn hoá (trên), vùng cây (giữa) và ảnh đã tách nền dùng làm dữ liệu (dưới)"
 
 
 def _avg_kb(folder: Path) -> float:
@@ -193,7 +184,7 @@ def sec_intro(r: Report, ctx: dict):
     ], widths=[3.5, 6.0, 6.5], caption="Công nghệ sử dụng")
 
 
-def sec_dataset(r: Report, ctx: dict, seg_ref: str = "mục 4.2"):
+def sec_dataset(r: Report, ctx: dict):
     rows = ctx["manifest"]
     imgs = ctx["images"]
     n_db = ctx["db"]["images"]
@@ -241,7 +232,8 @@ def sec_dataset(r: Report, ctx: dict, seg_ref: str = "mục 4.2"):
         "cảnh, chủ thể là công trình/người, rừng ngập mặn…). Danh sách loại được lưu theo tiêu đề nguồn trong "
         "data/manual_exclude.csv để quy trình có thể tái lập.",
         f"Tách {len(ctx['queries'])} ảnh có nhãn chi làm ảnh truy vấn thử (data/queries, không đưa vào CSDL).",
-        f"Tách nền từng ảnh ({seg_ref}) rồi qua cổng kiểm soát chất lượng tự động: chỉ nhận ảnh tìm thấy cây, có tỉ "
+        f"Tách nền tự động từng ảnh (chỉ giữ cây, nền thay bằng màu trắng) rồi qua cổng kiểm soát chất lượng: chỉ "
+        f"nhận ảnh tìm thấy cây, có tỉ "
         f"lệ vùng cây trong [4%, 90%] và tâm vùng cây lệch tâm ảnh không quá 30% mỗi trục → loại thêm "
         f"{len(ctx['gate_excluded'])} ảnh.",
         f"Kết quả: {n_db} ảnh đã tách nền trong CSDL (đạt yêu cầu ≥ {config.MIN_IMAGES} ảnh).",
@@ -315,7 +307,7 @@ def sec_dataset(r: Report, ctx: dict, seg_ref: str = "mục 4.2"):
         sec_quant_dataset(r, ctx["feature_analysis"], "2.5")
 
 
-def sec_features(r: Report, ctx: dict, seg_ref: str = "mục 4.2", with_analysis: bool = True):
+def sec_features(r: Report, ctx: dict, with_analysis: bool = True):
     fs = {f["set_name"]: f for f in ctx["feature_sets"]}
     r.h(1, "3. Các bộ đặc trưng nhận diện cây (Nội dung 2)")
     r.h(2, "3.1. Định hướng thiết kế")
@@ -360,7 +352,7 @@ def sec_features(r: Report, ctx: dict, seg_ref: str = "mục 4.2", with_analysis
         "đồ); giá trị 0 khi hai phân bố màu trùng nhau và tối đa 2 cho mỗi biểu đồ khi không có màu chung.")
 
     r.h(2, "3.3. Bộ đặc trưng 2 – Hình dạng tán/thân cây (113 chiều, độ đo L2)")
-    r.p(f"Đặc trưng hình dạng được tính trên mặt nạ nhị phân của vật thể ({seg_ref}) và được thiết kế để ít phụ thuộc "
+    r.p("Đặc trưng hình dạng được tính trên mặt nạ nhị phân vùng cây của ảnh đã tách nền và được thiết kế để ít phụ thuộc "
         "vào vị trí, kích thước và (một phần) góc quay của cây trong ảnh:")
     r.table(["Khối", "Chiều", "Cách tính", "Giá trị thông tin"], [
         ["region", "10", "Diện tích tương đối; tỉ lệ cao/rộng của hình chữ nhật cơ bản; extent (diện tích/hình "
@@ -420,26 +412,9 @@ def sec_extraction_db(r: Report, ctx: dict):
         "song song nhiều tiến trình) → tính embedding theo lô 32 ảnh → ghi vào SQLite → tính thống kê chuẩn hoá cho "
         "từng bộ. Thời gian trích rút trung bình khoảng 0,1 giây/ảnh cho ba bộ thủ công (đã song song hoá) và "
         "0,02 giây/ảnh cho embedding.")
-    r.h(2, "4.2. Tách nền (phân đoạn vật thể / nền)")
-    seg = ctx.get("seg_stats", {})
-    r.p("Mặt nạ vùng cây được tính bằng mô hình phân đoạn ngữ nghĩa SegFormer-b0 huấn luyện sẵn trên bộ ADE20K "
-        "(150 lớp, trong đó có lớp “tree”; định dạng ONNX ~15 MB, chạy bằng ONNX Runtime trên CPU, ~0,13 giây/ảnh). "
-        "Các điểm ảnh được gán lớp “tree” tạo thành mặt nạ thô, sau đó lọc hình thái đóng/mở, giữ thành phần liên "
-        "thông có diện tích lớn và gần tâm ảnh nhất (loại các cây ở hậu cảnh) và lấp lỗ (khe trời giữa các cành) "
-        "để được “hình bao” của cây. Phương án dự phòng khi không có model hoặc model không tìm thấy cây là thuật "
-        "toán GrabCut khởi tạo bằng hình chữ nhật trung tâm kèm loại điểm ảnh bầu trời theo màu; ảnh vẫn không tìm "
-        "được cây bị cổng kiểm soát chất lượng loại (mục 2.2)."
-        + (f" Thống kê trên {sum(seg.values())} ảnh trước cổng kiểm soát: SegFormer {seg.get('segformer', 0)}, GrabCut "
-           f"{seg.get('grabcut', 0)}, không tìm thấy cây {seg.get('default_rect', 0)}." if seg else ""))
-    r.p("Phiên bản đầu của hệ thống dùng GrabCut làm bước chính. Khi kiểm tra chéo đặc trưng (mục 3.6), nhóm phát "
-        "hiện 135/639 ảnh (21%) có vector hình dạng trùng hệt nhau: GrabCut lấy dải viền ảnh làm mẫu nền, nên khi "
-        "tán cây chạm mép ảnh hoặc viền có cỏ/cây cùng màu với tán, mô hình nền “học” luôn màu của cây và trả về "
-        "0% vật thể, hệ thống rơi về mặt nạ chữ nhật mặc định. GrabCut chỉ dựa vào màu nên không tách được tán lá "
-        "khỏi cỏ cùng màu; mô hình ngữ nghĩa đã học khái niệm “cây” nên xử lý tốt cả cây trụi lá, ảnh đen trắng và "
-        "tán chạm mép. Sau khi thay, độ chính xác P@5 của bộ hình dạng và của tổ hợp đặc trưng đều tăng.")
-    r.p(SEG_CUTOUT_TEXT)
-    r.p("Mặt nạ hình bao dùng cho bộ hình dạng và cổng kiểm soát chất lượng (tỉ lệ vùng cây, độ lệch tâm, mục "
-        "2.2); mặt nạ điểm ảnh cây dùng cho bộ màu và bộ kết cấu.")
+    r.h(2, "4.2. Ảnh tách nền")
+    r.p("Mọi ảnh được tách nền tự động trước khi đưa vào CSDL: chỉ giữ lại cây, phần nền được thay bằng màu "
+        "trắng. Ảnh truy vấn cũng được tách nền theo cùng cách trước khi trích rút đặc trưng.")
     r.figure(FIG / "03_segmentation.png", SEG_FIG_CAPTION, 16)
     r.h(2, "4.3. Lược đồ CSDL đặc trưng (SQLite)")
     r.p("Hệ CSDL theo mô hình lai: siêu dữ liệu quan hệ của ảnh lưu trong bảng thông thường để lọc chính xác "
@@ -508,7 +483,7 @@ def sec_search(r: Report, ctx: dict):
          "Danh sách category gốc", "Ảnh thô (JPEG) + raw_manifest.csv (nguồn, tác giả, giấy phép, chi)"],
         ["2. Tiền xử lý", "Xoay EXIF, RGB, resize cạnh ngắn 512, center-crop, khử trùng lặp pHash, áp dụng danh "
                           "sách kiểm duyệt, tách ảnh truy vấn thử", "Ảnh thô", "Ảnh 512×512 + manifest.csv, queries.csv"],
-        ["3. Tách nền", "SegFormer (lớp tree) + lọc hình thái; dự phòng GrabCut; ghép cây lên nền trắng",
+        ["3. Tách nền", "Tách nền tự động: chỉ giữ cây, nền thay bằng màu trắng",
          "Ảnh RGB 512×512", "Ảnh chỉ còn cây trên nền trắng (lưu vào CSDL), mặt nạ hình bao, tỉ lệ vùng cây, độ lệch tâm"],
         ["4. Trích rút đặc trưng", "Tính 4 bộ đặc trưng", "Ảnh đã tách nền + mặt nạ",
          "4 vector: " + ", ".join(f"{f['set_name']} ({f['dim']})" for f in ctx["feature_sets"]) + " + bố cục khối"],
