@@ -116,16 +116,16 @@ def pick_query_source() -> tuple[str | None, int | None]:
     st.info("Ảnh này vốn nằm trong CSDL: nếu không loại trừ, nó sẽ đứng hạng 1 với độ tương đồng 1.0.")
     exclude = st.checkbox("Loại ảnh truy vấn khỏi kết quả", value=True)
     path = Path(str(row["path"]))
-    if not path.exists():  # đường dẫn lưu trong CSDL không còn đúng -> ghép lại từ IMG_DIR
-        path = Path(_mod("config").IMG_DIR) / str(row["filename"])
+    if not path.exists():  # đường dẫn lưu trong CSDL không còn đúng -> ghép lại từ NOBG_DIR
+        path = Path(_mod("config").NOBG_DIR) / str(row["filename"])
     return str(path), (int(row["image_id"]) if exclude else None)
 
 
 def render_query(res: dict) -> None:
     """Ảnh truy vấn + mask, thông tin truy vấn và bảng thời gian."""
     q, cols = res["query"], st.columns(2)
-    cols[0].image(q["rgb"], caption="Ảnh truy vấn (đã chuẩn hoá)", width="stretch")
-    cols[1].image(_mod("segment").overlay(q["rgb"], q["mask"]), caption=f"Vùng cây (mask) – chiếm {q['mask_coverage']:.1%}", width="stretch")
+    cols[0].image(q["original"], caption="Ảnh truy vấn (đã chuẩn hoá)", width="stretch")
+    cols[1].image(q["rgb"], caption=f"Sau tách nền – vùng cây chiếm {q['mask_coverage']:.1%}", width="stretch")
     st.caption(f"Backend: {res['backend']} · ứng viên {res['n_candidates']}/{res['n_database']} · trọng số "
                + ", ".join(f"{s}={w:.2f}" for s, w in res["weights"].items()))
     st.dataframe(pd.DataFrame([{"bước": k, "thời gian (ms)": round(v, 2)} for k, v in res["timing_ms"].items()]), hide_index=True)
@@ -192,7 +192,7 @@ def run_query(searcher, options: dict, path: str, exclude_id: int | None) -> dic
 def main() -> None:
     st.set_page_config(page_title="Demo hệ thống tìm kiếm ảnh cây", layout="wide")
     st.title("Demo hệ thống: tìm kiếm ảnh cây theo nội dung")
-    st.caption("Ảnh truy vấn được chuẩn hoá, phân đoạn vật thể, trích rút đặc trưng rồi so khớp có trọng số.")
+    st.caption("Ảnh truy vấn được chuẩn hoá, tách nền (cây trên nền trắng, giống ảnh CSDL), trích rút đặc trưng rồi so khớp có trọng số.")
     try:
         searcher, conn = load_backend()
     except LOAD_ERRORS as exc:

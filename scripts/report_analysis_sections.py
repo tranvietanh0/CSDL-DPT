@@ -104,8 +104,8 @@ def sec_info_value(r: Report, fa: dict, num: str):
         f"{_f(blocks[0]['nn1_acc'] / max(fa['nn1_chance'], 1e-9), 1)} lần ngẫu nhiên.",
         f"Khối có tỉ số Fisher lớn nhất là {best_fisher['block']} ({_f(best_fisher['fisher'])}): ít chiều nhưng mỗi "
         f"chiều tách chi tốt, nên là đặc trưng “tìm sự khác biệt” rất hiệu quả trên mỗi chiều lưu trữ.",
-        "Biểu đồ màu vùng cây (hsv_fg) giữ thông tin tốt hơn biểu đồ nền (hsv_bg): tách vật thể khỏi nền đúng như "
-        "lý thuyết khắc phục hiệu ứng che mặt của nền.",
+        "Sau khi tách nền, các khối màu chỉ mô tả chính cây; khối hsv_grid (màu theo vị trí trên tán) mang nhiều "
+        "thông tin hơn hsv_fg vì phân biệt được cả cách bố trí màu (thân lộ, ngọn sáng) chứ không chỉ tổng màu.",
         "Các khối hình dạng có 1-NN thấp hơn khi dùng riêng vì cùng một chi có nhiều dáng (tuổi cây, cắt tỉa, gió) "
         "và hình bao chỉ là hình chiếu 2D; chúng vẫn bổ sung thông tin độc lập với màu (không phụ thuộc mùa, ánh "
         "sáng) nên được giữ trong tổ hợp có trọng số."

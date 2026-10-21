@@ -16,11 +16,11 @@ from ..preprocess import normalize_image
 from ..segment import foreground_mask
 from . import color, shape, texture
 
-EXTRACTOR_VERSION = "1.0.0"
+EXTRACTOR_VERSION = "2.0.0"  # 2.x: dac trung tinh tren anh da tach nen
 
 SET_INFO = {
     "color": {"module": color, "metric": config.SET_METRIC["color"],
-              "description": "Mau sac: bieu do HSV toan cuc (8x3x3), theo luoi 3x3, rieng vat the / nen, moment mau"},
+              "description": "Mau sac cua cay (anh da tach nen): bieu do HSV 8x3x3, theo luoi 3x3 tren hop bao, moment mau"},
     "shape": {"module": shape, "metric": config.SET_METRIC["shape"],
               "description": "Hinh dang tan cay: do do vung, moment Hu, luoi 8x8 (nguong 15%), Fourier, profile be rong"},
     "texture": {"module": texture, "metric": config.SET_METRIC["texture"],
@@ -50,10 +50,17 @@ def load_rgb(path: str | Path) -> np.ndarray:
 
 
 def extract_all(rgb: np.ndarray, mask: np.ndarray | None = None, sets: list[str] | None = None,
-                with_timing: bool = False):
-    """Tra ve {set_name: (vector, layout)}; mask duoc tinh neu chua co."""
+                with_timing: bool = False, pixel_mask: np.ndarray | None = None):
+    """Tra ve {set_name: (vector, layout)}; mask duoc tinh neu chua co.
+
+    mask       : mat na hinh bao cua cay (da lap lo) -> bo hinh dang.
+    pixel_mask : chi cac pixel thuc su la cay trong anh da tach nen (khong gom khe nen trang giua canh)
+                 -> bo mau sac va ket cau; mac dinh = mask.
+    """
     if mask is None:
         mask = foreground_mask(rgb)
+    if pixel_mask is None:
+        pixel_mask = mask
     sets = sets or available_sets()
     out, timing = {}, {}
     for name in sets:
@@ -64,7 +71,7 @@ def extract_all(rgb: np.ndarray, mask: np.ndarray | None = None, sets: list[str]
                 continue
             out[name] = mod.extract(rgb, mask)
         else:
-            out[name] = SET_INFO[name]["module"].extract(rgb, mask)
+            out[name] = SET_INFO[name]["module"].extract(rgb, mask if name == "shape" else pixel_mask)
         timing[name] = (time.perf_counter() - t0) * 1000
     return (out, timing) if with_timing else out
 

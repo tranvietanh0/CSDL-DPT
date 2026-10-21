@@ -27,7 +27,7 @@ docs/figures/         hình minh hoạ dùng trong báo cáo
 pip install -r requirements.txt
 
 python scripts/build_dataset.py        # 1. sưu tầm (Wikimedia Commons) + chuẩn hoá ảnh
-python scripts/extract_features.py     # 2-3. phân đoạn, trích rút đặc trưng, ghi CSDL SQLite
+python scripts/extract_features.py     # 2-3. tách nền (lưu data/images_nobg), trích rút đặc trưng, ghi CSDL SQLite
 python scripts/build_index.py          # 3b. chỉ mục kd-tree (PCA) + phân cụm K-means
 python scripts/run_evaluation.py       # 4c. đánh giá leave-one-out (P@5, mAP, so sánh backend)
 python scripts/analyze_features.py      # 2. phân tích giá trị thông tin đặc trưng (Fisher, 1-NN), hình 15-16

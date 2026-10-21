@@ -52,11 +52,20 @@ def is_available() -> bool:
     return _load() is not None
 
 
-def tree_mask(rgb: np.ndarray) -> np.ndarray:
-    """rgb uint8 HxWx3 -> mask bool (do phan giai dau ra cua model, = INPUT_SIZE/4) cua lop tree."""
+def tree_mask(rgb: np.ndarray, full_res: bool = False) -> np.ndarray:
+    """rgb uint8 HxWx3 -> mask bool cua lop tree.
+
+    full_res=False: do phan giai dau ra cua model (= INPUT_SIZE/4), du cho mat na hinh bao.
+    full_res=True : noi suy song tuyen hieu so (logit tree - logit lon nhat cua lop khac) len HxW roi lay > 0
+                    -> vien tan la min (dung de tach nen); chi noi suy 1 ban do thay vi 150 de tiet kiem bo nho.
+    """
     import cv2
     sess = _load()
     x = cv2.resize(rgb, (INPUT_SIZE, INPUT_SIZE), interpolation=cv2.INTER_AREA).astype(np.float32) / 255.0
     x = ((x - MEAN) / STD).transpose(2, 0, 1)[None].astype(np.float32)
     logits = sess.run(None, {sess.get_inputs()[0].name: x})[0][0]
-    return logits.argmax(0) == TREE_CLASS
+    margin = logits[TREE_CLASS] - np.delete(logits, TREE_CLASS, axis=0).max(0)
+    if full_res:
+        h, w = rgb.shape[:2]
+        margin = cv2.resize(margin, (w, h), interpolation=cv2.INTER_LINEAR)
+    return margin > 0
