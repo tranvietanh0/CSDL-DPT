@@ -1,13 +1,13 @@
 Anh truy van: C:\Projects\MyProject\CSDL-DPT\data\queries\query_03.jpg  (ti le vung cay: 30.81%)
 Backend: kdtree  | ung vien: 60/627  | trong so: color=0.30, shape=0.25, texture=0.20, deep=0.25
-  dac trung [color] dim=369: hsv_global(72), hsv_grid(144), hsv_fg(72), hsv_bg(72), moments(9)
+  dac trung [color] dim=225: hsv_fg(72), hsv_grid(144), moments(9)
   dac trung [shape] dim=113: region(10), hu(7), grid(64), fourier(16), profile(16)
   dac trung [texture] dim=85: glcm(10), lbp(28), edge(9), tamura(3), dct(35)
   dac trung [deep] dim=1280: mobilenetv2_gap(1280)
  # anh            chi             sim       D |     color     shape   texture      deep
- 1 tree_0064.jpg  Populus       0.715   0.399 |     0.326     0.432     0.597     0.294
- 2 tree_0089.jpg  Populus       0.674   0.484 |     0.608     0.461     0.541     0.312
- 3 tree_0016.jpg  Populus       0.647   0.545 |     0.357     0.729     0.709     0.455
- 4 tree_0088.jpg  Populus       0.637   0.571 |     0.478     0.791     0.661     0.389
- 5 tree_0002.jpg  Populus       0.634   0.577 |     0.626     0.593     0.698     0.404
-Thoi gian (ms): load_normalize=3.1, segment=114.4, extract_color=11.8, extract_shape=19.5, extract_texture=64.1, extract_deep=4.0, candidates=1.2, distance_rank=0.3, total=218.9
+ 1 tree_0064.jpg  Populus       0.737   0.357 |     0.285     0.432     0.548     0.217
+ 2 tree_0089.jpg  Populus       0.706   0.417 |     0.439     0.461     0.489     0.288
+ 3 tree_0016.jpg  Populus       0.651   0.537 |     0.333     0.729     0.668     0.485
+ 4 tree_0088.jpg  Populus       0.647   0.546 |     0.431     0.791     0.595     0.398
+ 5 tree_0019.jpg  Populus       0.645   0.551 |     0.416     0.666     0.817     0.386
+Thoi gian (ms): load_normalize=3.2, remove_background=263.4, extract_color=12.9, extract_shape=24.4, extract_texture=113.6, extract_deep=6.9, candidates=2.0, distance_rank=0.8, total=427.7

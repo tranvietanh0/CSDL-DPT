@@ -53,7 +53,7 @@ python scripts/build_index.py
 
 1. Bấm **Upload**, chọn file `.jpg`, `.jpeg` hoặc `.png` (ảnh chụp ngang, một cây nằm giữa khung cho kết quả tốt nhất).
 2. Bấm **Tìm kiếm**.
-3. Đợi khoảng 0,7–1,0 giây (bước phân đoạn SegFormer và trích rút đặc trưng chiếm phần lớn thời gian).
+3. Đợi khoảng 0,7–1,0 giây (bước tách nền bằng SegFormer và trích rút đặc trưng chiếm phần lớn thời gian).
 
 Ảnh không vuông sẽ được thu nhỏ theo cạnh ngắn và cắt giữa về 512×512 giống ảnh trong CSDL.
 Mười ảnh thử không nằm trong CSDL có sẵn ở `data/queries/` để dùng ngay.
@@ -70,7 +70,7 @@ Sau khi đổi backend, top-K hoặc trọng số, giao diện nhắc "Tham số
 
 ## 5. Đọc kết quả
 
-- **Ảnh truy vấn (đã chuẩn hoá)** và **Vùng cây (mask)**: vùng đỏ là phần được coi là cây; tỉ lệ vùng cây hiển thị bên dưới.
+- **Ảnh truy vấn (đã chuẩn hoá)** và **Sau tách nền**: ảnh bên phải là ảnh truy vấn chỉ còn cây trên nền trắng (giống ảnh trong CSDL); tỉ lệ vùng cây hiển thị bên dưới.
   Nếu vùng đỏ lệch nhiều (bao cả cỏ, bỏ sót tán) thì kết quả các bộ hình dạng/kết cấu sẽ kém tin cậy.
 - **Dòng Backend**: backend đang dùng, số ứng viên đã xét trên tổng số ảnh, trọng số đã chuẩn hoá.
 - **Bảng thời gian (ms)**: từng bước load_normalize, segment, extract_*, candidates, distance_rank, total.
@@ -118,6 +118,6 @@ In bảng kết quả ra màn hình, ghi toàn bộ giá trị trung gian vào `
 | Trang báo CSDL trống hoặc thiếu chỉ mục | chạy `python scripts/extract_features.py` rồi `python scripts/build_index.py`, khởi động lại |
 | `Port 8501 is already in use` | thêm `--server.port <cổng khác>` |
 | Thiếu bộ `deep` trong thanh bên | model chưa tải được (không có Internet); hệ thống vẫn chạy với 3 bộ còn lại, chạy lại `extract_features.py` khi có mạng |
-| Vùng cây (mask) sai nhiều | ảnh không có cây rõ ở giữa hoặc nền quá giống tán; thử ảnh khác hoặc giảm trọng số shape/texture |
+| Ảnh sau tách nền sai nhiều (mất cây hoặc còn nền) | ảnh không có cây rõ ở giữa hoặc nền quá giống tán; thử ảnh khác hoặc giảm trọng số shape/texture |
 | Kết quả không đổi sau khi chỉnh trọng số | phải bấm lại **Tìm kiếm** |
 | Ảnh tải lên bị mất sau khi tắt app | ảnh tạm được lưu ở `results/tmp/`, có thể xoá thoải mái |

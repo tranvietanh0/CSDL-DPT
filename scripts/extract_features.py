@@ -1,4 +1,7 @@
-"""Buoc 2-3: trich rut dac trung cho toan bo anh trong data/images va luu vao CSDL SQLite.
+"""Buoc 2-3: tach nen + trich rut dac trung cho toan bo anh trong data/images va luu vao CSDL SQLite.
+
+Moi anh duoc tach nen (segment.remove_background) va luu o data/images_nobg (chi con cay tren nen trang);
+CSDL tro toi anh da tach nen va moi dac trung duoc tinh tren anh do.
 
     python scripts/extract_features.py [--workers N] [--no-deep] [--limit N] [--no-gate]
 
@@ -22,18 +25,20 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from treedb import config, db  # noqa: E402
 from treedb.features import EXTRACTOR_VERSION, describe, extract_all, load_rgb  # noqa: E402
 from treedb.index import fit_stats  # noqa: E402
-from treedb.segment import foreground_mask  # noqa: E402
+from PIL import Image  # noqa: E402
+from treedb.segment import remove_background  # noqa: E402
 
 HANDCRAFTED = ["color", "shape", "texture"]
 GATE_COVERAGE = (0.04, 0.90)
 GATE_OFFSET = 0.30
 NO_TREE = "default_rect"
+MAX_WORKERS = max(1, min(6, mp.cpu_count() - 1))   # moi tien trinh nap rieng SegFormer: nhieu hon de het RAM
 
 
 def _work(filename: str):
-    rgb = load_rgb(config.IMG_DIR / filename)
-    mask, method = foreground_mask(rgb, return_method=True)
-    feats = extract_all(rgb, mask, sets=HANDCRAFTED)
+    clean, mask, cut, method = remove_background(load_rgb(config.IMG_DIR / filename))
+    Image.fromarray(clean).save(config.NOBG_DIR / filename, "JPEG", quality=config.JPEG_QUALITY, optimize=True)
+    feats = extract_all(clean, mask, sets=HANDCRAFTED, pixel_mask=cut)
     region = feats["shape"][0][:10]
     return (filename, float(mask.mean()), (float(region[8]), float(region[9])), method,
             {s: v for s, (v, _) in feats.items()}, {s: lay for s, (_, lay) in feats.items()})
@@ -45,7 +50,7 @@ def passes_gate(cov: float, off: tuple[float, float], method: str) -> bool:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--workers", type=int, default=max(1, mp.cpu_count() - 1))
+    ap.add_argument("--workers", type=int, default=MAX_WORKERS)
     ap.add_argument("--no-deep", action="store_true")
     ap.add_argument("--no-gate", action="store_true")
     ap.add_argument("--limit", type=int, default=None)
@@ -58,6 +63,7 @@ def main():
     by_name = {r["filename"]: r for r in rows}
     filenames = list(by_name)
 
+    config.NOBG_DIR.mkdir(parents=True, exist_ok=True)
     t0 = time.perf_counter()
     extracted: dict[str, tuple] = {}
     layouts: dict = {}
@@ -96,7 +102,7 @@ def main():
     id_of = {}
     for fn, cov, _ in kept:
         rec = dict(by_name[fn])
-        rec["path"] = str(config.IMG_DIR / fn)
+        rec["path"] = str(config.NOBG_DIR / fn)
         rec["group_label"] = rec.pop("group", "")
         rec["fg_coverage"] = cov
         id_of[fn] = db.upsert_image(conn, rec)
@@ -119,7 +125,7 @@ def main():
             names = [fn for fn, _, _ in kept]
             for i in range(0, len(names), batch):
                 chunk = names[i:i + batch]
-                rgbs = [load_rgb(config.IMG_DIR / n) for n in chunk]
+                rgbs = [load_rgb(config.NOBG_DIR / n) for n in chunk]
                 V = deep.extract_batch(rgbs)
                 if layout is None:
                     layout = deep.extract(rgbs[0])[1]
