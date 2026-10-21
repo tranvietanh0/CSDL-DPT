@@ -95,29 +95,6 @@ def foreground_mask(rgb: np.ndarray, return_method: bool = False):
     return (mask, method) if return_method else mask
 
 
-CUTOUT_MARGIN = 9        # px: vien tan la min chi duoc giu trong vung lan can nay cua mat na hinh bao
-FEATHER_SIGMA = 1.0      # px: lam mem vien khi ghep cay len nen trang
-BACKGROUND = 255         # mau nen sau khi tach (trang)
-
-
-def remove_background(rgb: np.ndarray):
-    """Tach nen: rgb uint8 HxWx3 -> (anh chi con cay tren nen trang, mat na hinh bao, mat na pixel cay, phuong an).
-
-    Mat na hinh bao (da lap lo) dung cho dac trung hinh dang; anh cat (cutout) dung mat na min hon:
-    pixel "tree" cua SegFormer o do phan giai day du, gioi han trong lan can cua hinh bao, tru pixel mau troi
-    -> loai ca cac khe troi giua canh la va cac cay khac o hau canh.
-    """
-    mask, method = foreground_mask(rgb, return_method=True)
-    cut = mask
-    if method == "segformer":
-        k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * CUTOUT_MARGIN + 1,) * 2)
-        near = cv2.dilate(mask.astype(np.uint8), k).astype(bool)
-        cut = segformer.tree_mask(rgb, full_res=True) & near & ~_sky(rgb)   # bo troi lot giua cac canh tru
-    alpha = cv2.GaussianBlur(cut.astype(np.float32), (0, 0), FEATHER_SIGMA)[..., None]
-    clean = rgb.astype(np.float32) * alpha + BACKGROUND * (1 - alpha)
-    return clean.round().astype(np.uint8), mask, cut, method
-
-
 def mask_bbox(mask: np.ndarray) -> tuple[int, int, int, int]:
     """(top, left, bottom, right) - bottom/right exclusive."""
     ys, xs = np.where(mask)
