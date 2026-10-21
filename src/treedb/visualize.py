@@ -128,7 +128,7 @@ def plot_block_diagram(out):
     _box(ax, 0.03, y, 0.15, 0.13, "1. Thu thập ảnh\n(Wikimedia Commons,\nlọc theo quy tắc)")
     _box(ax, 0.22, y, 0.15, 0.13, "2. Tiền xử lý\n(EXIF, RGB, resize,\ncenter-crop 512×512,\nkhử trùng lặp)")
     _box(ax, 0.41, y, 0.15, 0.13, "3. Phân đoạn\nvật thể / nền\n(SegFormer,\ndự phòng GrabCut)")
-    _box(ax, 0.60, y, 0.17, 0.13, "4. Trích rút đặc trưng\nMàu (369) · Hình dạng (113)\nKết cấu (85) · Embedding (1280)")
+    _box(ax, 0.60, y, 0.17, 0.13, "4. Trích rút đặc trưng\nMàu (513) · Hình dạng (113)\nKết cấu (85) · Embedding (1280)")
     _box(ax, 0.81, y, 0.16, 0.13, "5. CSDL SQLite\nimages · feature_sets\nfeatures · feature_stats", fc="#fff2cc",
          ec="#b8860b")
     _arrow(ax, 0.18, y + 0.065, 0.22, y + 0.065, "ảnh thô + metadata")
@@ -150,7 +150,7 @@ def plot_block_diagram(out):
     _box(ax, 0.03, y2, 0.12, 0.13, "Ảnh truy vấn\n(cây mới)", fc="#fde9d9", ec="#c0504d")
     _box(ax, 0.18, y2, 0.14, 0.13, "Q1. Tiền xử lý +\nphân đoạn\n(giống bước 2-3)")
     _box(ax, 0.35, y2, 0.15, 0.13, "Q2. Trích rút đặc trưng\n(giống bước 4)")
-    _box(ax, 0.53, y2, 0.16, 0.13, "Q3. Chọn ứng viên\nlinear / kd-tree / K-means\n(cắt tỉa)")
+    _box(ax, 0.53, y2, 0.16, 0.13, "Q3. Chọn ứng viên\nlinear / k-d / R / tứ phân\n/ K-means + lọc")
     _box(ax, 0.72, y2, 0.14, 0.13, "Q4. Tính khoảng cách\nL1 · L2 · cosine\nchuẩn hoá, trọng số\nD = Σ wₛ·dₛ/scaleₛ")
     _box(ax, 0.88, y2, 0.10, 0.13, "Q5. Xếp hạng\nsim = 1/(1+D)\nTop-5", fc="#e2f0d9", ec="#3a7d2c")
     _arrow(ax, 0.15, y2 + 0.065, 0.18, y2 + 0.065)

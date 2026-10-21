@@ -36,6 +36,7 @@ python scripts/build_docs.py           # sinh báo cáo docx + pdf
 python scripts/build_report1.py         # Báo cáo 1 (nội dung 1, 2) docx + pdf
 
 python scripts/query.py --image data/queries/query_01.jpg --backend linear --fig out.png   # truy vấn 1 ảnh
+python scripts/query.py --image data/queries/query_01.jpg --backend rtree --genus Quercus,Betula   # cây R + lọc theo chi
 streamlit run app/streamlit_app.py                                                            # demo web
 ```
 

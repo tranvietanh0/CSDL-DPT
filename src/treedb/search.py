@@ -14,10 +14,13 @@ import numpy as np
 
 from . import config, db
 from .features import extract_all, load_rgb, split_blocks
-from .index import FeatureSpace, KDTreeIndex, KMeansIndex
+from .feedback import apply_feedback
+from .index import INDEX_QUADTREE, INDEX_RTREE, FeatureSpace, KDTreeIndex, KMeansIndex, SpatialIndex
 from .segment import foreground_mask
 
-BACKENDS = ("linear", "kdtree", "kmeans")
+BACKENDS = ("linear", "kdtree", "rtree", "quadtree", "kmeans")
+FILTER_FIELDS = ("genus", "group_label", "license")   # loc theo sieu du lieu quan he (slide bai 11, tr.3)
+HIST_BLOCKS = {"hsv_global", "hsv_grid", "hsv_fg", "hsv_bg", "hsv_cum", "pwh"}
 
 
 def similarity_from_distance(d: np.ndarray | float):
@@ -30,6 +33,8 @@ class Searcher:
         self.space = FeatureSpace(self.conn, sets, weights)
         self._kd: KDTreeIndex | None = None
         self._km: KMeansIndex | None = None
+        self._spatial: dict[str, SpatialIndex] = {}
+        self._meta: dict[int, dict] | None = None
 
     # ---- chi muc (nap luoi) -----------------------------------------------------------
     @property
@@ -44,9 +49,31 @@ class Searcher:
             self._km = KMeansIndex(self.conn)
         return self._km
 
+    def spatial(self, name: str) -> SpatialIndex:
+        if name not in self._spatial:
+            self._spatial[name] = SpatialIndex(self.conn, name)
+        return self._spatial[name]
+
+    @property
+    def meta(self) -> dict[int, dict]:
+        if self._meta is None:
+            self._meta = db.get_images(self.conn, [int(i) for i in self.space.ids])
+        return self._meta
+
+    def filter_values(self) -> dict[str, list[str]]:
+        """Cac gia tri co the loc cho tung truong sieu du lieu (dung cho giao dien)."""
+        return {f: sorted({str(m.get(f) or "") for m in self.meta.values()} - {""}) for f in FILTER_FIELDS}
+
+    def _match(self, rows: np.ndarray, filters: dict | None) -> np.ndarray:
+        if not filters:
+            return rows
+        keep = [r for r in rows if all(not vals or str(self.meta[int(self.space.ids[r])].get(f) or "") in vals
+                                       for f, vals in filters.items())]
+        return np.array(keep, dtype=int)
+
     # ---- truy van --------------------------------------------------------------------
     def query(self, image, top_k: int = config.TOP_K, backend: str = "linear", weights: dict | None = None,
-              exclude_ids: set[int] | None = None, log: bool = True) -> dict:
+              exclude_ids: set[int] | None = None, log: bool = True, filters: dict | None = None) -> dict:
         """image: duong dan anh hoac mang RGB uint8. Tra ve dict ket qua kem cac gia tri trung gian."""
         t_all = time.perf_counter()
         timing: dict[str, float] = {}
@@ -68,7 +95,7 @@ class Searcher:
         timing.update({f"extract_{k}": v for k, v in t_ext.items()})
         feats = {s: v for s, (v, _) in feats_full.items()}
 
-        result = self._rank(feats, top_k, backend, exclude_ids, timing)
+        result = self._rank(feats, top_k, backend, exclude_ids, timing, filters)
         result.update({
             "query": {"path": path, "rgb": rgb, "mask": mask, "mask_coverage": float(mask.mean()),
                       "features": {s: {"vector": v, "layout": lay, "blocks": split_blocks(v, lay)}
@@ -82,37 +109,43 @@ class Searcher:
         return result
 
     def query_by_id(self, image_id: int, top_k: int = config.TOP_K, backend: str = "linear",
-                    weights: dict | None = None, exclude_self: bool = True) -> dict:
+                    weights: dict | None = None, exclude_self: bool = True, filters: dict | None = None) -> dict:
         """Truy van bang mot anh da co trong CSDL (dung dac trung da luu) - phuc vu danh gia."""
         if weights:
             self.space.set_weights(weights)
         row = self.space.pos[int(image_id)]
         feats = {s: self.space.X[s][row] for s in self.space.sets}
         excl = {int(image_id)} if exclude_self else None
-        result = self._rank(feats, top_k, backend, excl, {})
+        result = self._rank(feats, top_k, backend, excl, {}, filters)
         result["query"] = {"image_id": int(image_id), "features": {s: {"vector": v} for s, v in feats.items()}}
         return result
 
+    def refine(self, result: dict, relevant_ids: list[int], nonrelevant_ids: list[int], top_k: int = config.TOP_K,
+               backend: str = "linear", exclude_ids: set[int] | None = None, filters: dict | None = None) -> dict:
+        """Truy van lai voi phan hoi lien quan (Rocchio) tu ket qua truoc do."""
+        feats = {s: f["vector"] for s, f in result["query"]["features"].items()}
+        new = apply_feedback(self.space, feats, relevant_ids, nonrelevant_ids, HIST_BLOCKS)
+        out = self._rank(new, top_k, backend, exclude_ids, {}, filters)
+        out["query"] = {**result["query"], "features": {s: {**result["query"]["features"][s], "vector": v}
+                                                        for s, v in new.items()}}
+        out["feedback"] = {"relevant": list(map(int, relevant_ids)), "nonrelevant": list(map(int, nonrelevant_ids))}
+        return out
+
     # ---- xep hang --------------------------------------------------------------------
-    def _rank(self, feats: dict, top_k: int, backend: str, exclude_ids: set[int] | None, timing: dict) -> dict:
+    def _rank(self, feats: dict, top_k: int, backend: str, exclude_ids: set[int] | None, timing: dict,
+              filters: dict | None = None) -> dict:
         if backend not in BACKENDS:
             raise ValueError(f"backend phai thuoc {BACKENDS}")
         t0 = time.perf_counter()
         index_info: dict = {}
-        if backend == "linear":
-            rows = np.arange(len(self.space.ids))
-        elif backend == "kdtree":
-            pool = config.CANDIDATE_POOL + (len(exclude_ids) if exclude_ids else 0)
-            c = self.kd.candidates(self.space, feats, pool)
-            rows = c["rows"]
-            index_info = {"pca_dim": self.kd.meta["pca_dim"], "candidate_ids": c["ids"].tolist(),
-                          "tree_dist": c["tree_dist"].tolist()}
-        else:
-            pool = config.CANDIDATE_POOL + (len(exclude_ids) if exclude_ids else 0)
-            c = self.km.candidates(self.space, feats, pool)
-            rows = c["rows"]
-            index_info = {"clusters_used": c["clusters"], "centroid_dist": c["centroid_dist"],
-                          "candidate_ids": c["ids"].tolist()}
+        n_all = len(self.space.ids)
+        pool = config.CANDIDATE_POOL + (len(exclude_ids) if exclude_ids else 0)
+        while True:   # co bo loc: noi rong tap ung vien cho toi khi du top_k anh thoa man (hoac het CSDL)
+            rows, index_info = self._candidates(backend, feats, pool)
+            rows = self._match(rows, filters)
+            if not filters or backend == "linear" or len(rows) >= top_k + len(exclude_ids or ()) or pool >= n_all:
+                break
+            pool = min(pool * 2, n_all)
         if exclude_ids:
             keep = np.array([int(self.space.ids[r]) not in exclude_ids for r in rows], bool)
             rows = rows[keep]
@@ -139,9 +172,28 @@ class Searcher:
                             for s in dist["raw"]},
             })
         return {"backend": backend, "weights": dict(self.space.weights), "sets": list(self.space.sets),
+                "filters": {k: sorted(v) for k, v in (filters or {}).items() if v},
                 "n_candidates": int(len(rows)), "n_database": int(len(self.space.ids)),
                 "index_info": index_info, "timing_ms": timing, "results": results,
                 "all_distances": {"rows": rows, "combined": dist["combined"]}}
+
+
+    def _candidates(self, backend: str, feats: dict, pool: int) -> tuple[np.ndarray, dict]:
+        if backend == "linear":
+            return np.arange(len(self.space.ids)), {}
+        if backend == "kmeans":
+            c = self.km.candidates(self.space, feats, pool)
+            return c["rows"], {"clusters_used": c["clusters"], "centroid_dist": c["centroid_dist"],
+                               "candidate_ids": c["ids"].tolist()}
+        if backend == "kdtree":
+            c, meta = self.kd.candidates(self.space, feats, pool), self.kd.meta
+        else:
+            idx = self.spatial(INDEX_RTREE if backend == "rtree" else INDEX_QUADTREE)
+            c, meta = idx.candidates(self.space, feats, pool), idx.meta
+        info = {"pca_dim": meta["pca_dim"], "candidate_ids": c["ids"].tolist(), "tree_dist": c["tree_dist"].tolist()}
+        if "nodes_visited" in c:
+            info["nodes_visited"] = c["nodes_visited"]
+        return np.asarray(c["rows"], dtype=int), info
 
 
 def explain(result: dict) -> str:

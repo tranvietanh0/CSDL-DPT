@@ -28,6 +28,7 @@ HANDCRAFTED = ["color", "shape", "texture"]
 GATE_COVERAGE = (0.04, 0.90)
 GATE_OFFSET = 0.30
 NO_TREE = "default_rect"
+MAX_WORKERS = max(1, min(6, mp.cpu_count() - 1))   # moi tien trinh nap rieng SegFormer: nhieu hon de het RAM
 
 
 def _work(filename: str):
@@ -45,7 +46,7 @@ def passes_gate(cov: float, off: tuple[float, float], method: str) -> bool:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--workers", type=int, default=max(1, mp.cpu_count() - 1))
+    ap.add_argument("--workers", type=int, default=MAX_WORKERS)
     ap.add_argument("--no-deep", action="store_true")
     ap.add_argument("--no-gate", action="store_true")
     ap.add_argument("--limit", type=int, default=None)
