@@ -1,7 +1,7 @@
 """He thong tim kiem anh tuong dong (giai doan truc tuyen - online).
 
 Quy trinh mot truy van (slide bai 1, tr.26-28):
-  anh vao -> chuan hoa (nhu CSDL) -> tach nen (cay tren nen trang, nhu CSDL) -> trich rut dac trung (cung cach voi CSDL)
+  anh vao -> chuan hoa (nhu CSDL) -> phan doan vat the -> trich rut dac trung (cung cach voi CSDL)
         -> chon ung vien (linear / kd-tree / k-means) -> tinh khoang cach tung bo -> chuan hoa
         -> ket hop theo trong so -> do tuong dong = 1/(1+D) -> xep hang giam dan -> top-K.
 """
@@ -15,7 +15,7 @@ import numpy as np
 from . import config, db
 from .features import extract_all, load_rgb, split_blocks
 from .index import FeatureSpace, KDTreeIndex, KMeansIndex
-from .segment import remove_background
+from .segment import foreground_mask
 
 BACKENDS = ("linear", "kdtree", "kmeans")
 
@@ -61,17 +61,16 @@ class Searcher:
         timing["load_normalize"] = (time.perf_counter() - t0) * 1000
 
         t0 = time.perf_counter()
-        orig = rgb
-        rgb, mask, cut, _ = remove_background(orig)
-        timing["remove_background"] = (time.perf_counter() - t0) * 1000
+        mask = foreground_mask(rgb)
+        timing["segment"] = (time.perf_counter() - t0) * 1000
 
-        feats_full, t_ext = extract_all(rgb, mask, sets=self.space.sets, with_timing=True, pixel_mask=cut)
+        feats_full, t_ext = extract_all(rgb, mask, sets=self.space.sets, with_timing=True)
         timing.update({f"extract_{k}": v for k, v in t_ext.items()})
         feats = {s: v for s, (v, _) in feats_full.items()}
 
         result = self._rank(feats, top_k, backend, exclude_ids, timing)
         result.update({
-            "query": {"path": path, "original": orig, "rgb": rgb, "mask": mask, "mask_coverage": float(mask.mean()),
+            "query": {"path": path, "rgb": rgb, "mask": mask, "mask_coverage": float(mask.mean()),
                       "features": {s: {"vector": v, "layout": lay, "blocks": split_blocks(v, lay)}
                                    for s, (v, lay) in feats_full.items()}},
         })
@@ -172,8 +171,8 @@ def to_jsonable(result: dict) -> dict:
     """Loai bo mang lon (anh, mask) de ghi JSON."""
     out = {k: v for k, v in result.items() if k not in ("all_distances",)}
     q = dict(result.get("query", {}))
-    for k in ("original", "rgb", "mask"):
-        q.pop(k, None)
+    q.pop("rgb", None)
+    q.pop("mask", None)
     if "features" in q:
         q["features"] = {s: {"dim": int(f["vector"].size), "layout": f.get("layout"),
                              "blocks": {n: [round(float(x), 5) for x in b] for n, b in f.get("blocks", {}).items()}}

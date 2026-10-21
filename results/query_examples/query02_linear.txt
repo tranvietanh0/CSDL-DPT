@@ -1,13 +1,13 @@
 Anh truy van: C:\Projects\MyProject\CSDL-DPT\data\queries\query_02.jpg  (ti le vung cay: 27.90%)
 Backend: linear  | ung vien: 627/627  | trong so: color=0.30, shape=0.25, texture=0.20, deep=0.25
-  dac trung [color] dim=225: hsv_fg(72), hsv_grid(144), moments(9)
+  dac trung [color] dim=369: hsv_global(72), hsv_grid(144), hsv_fg(72), hsv_bg(72), moments(9)
   dac trung [shape] dim=113: region(10), hu(7), grid(64), fourier(16), profile(16)
   dac trung [texture] dim=85: glcm(10), lbp(28), edge(9), tamura(3), dct(35)
   dac trung [deep] dim=1280: mobilenetv2_gap(1280)
  # anh            chi             sim       D |     color     shape   texture      deep
- 1 tree_0034.jpg  Alnus         0.671   0.491 |     0.425     0.684     0.632     0.264
- 2 tree_0181.jpg  Quercus       0.670   0.492 |     0.274     0.615     0.634     0.519
- 3 tree_0285.jpg  Quercus       0.658   0.521 |     0.459     0.583     0.490     0.557
- 4 tree_0133.jpg  Quercus       0.647   0.546 |     0.558     0.565     0.631     0.446
- 5 tree_0105.jpg  Quercus       0.645   0.551 |     0.481     0.568     0.632     0.554
-Thoi gian (ms): load_normalize=3.4, remove_background=273.1, extract_color=10.2, extract_shape=25.9, extract_texture=77.1, extract_deep=4.5, candidates=0.0, distance_rank=4.6, total=399.6
+ 1 tree_0034.jpg  Alnus         0.660   0.515 |     0.444     0.684     0.775     0.223
+ 2 tree_0192.jpg  Quercus       0.630   0.587 |     0.429     0.698     0.634     0.628
+ 3 tree_0518.jpg  Aesculus      0.618   0.618 |     0.778     0.570     0.537     0.538
+ 4 tree_0285.jpg  Quercus       0.616   0.623 |     0.494     0.583     0.615     0.822
+ 5 tree_0105.jpg  Quercus       0.614   0.628 |     0.518     0.568     0.649     0.802
+Thoi gian (ms): load_normalize=3.3, segment=114.7, extract_color=10.5, extract_shape=18.1, extract_texture=67.5, extract_deep=4.4, candidates=0.0, distance_rank=4.6, total=223.8

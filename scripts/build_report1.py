@@ -12,12 +12,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from build_docs import cover, load_context, sec_dataset, sec_features, to_pdf  # noqa: E402
+from build_docs import FIG, cover, load_context, sec_dataset, sec_features, to_pdf  # noqa: E402
 from docx_helpers import Report  # noqa: E402
 from report_analysis_sections import SET_VI, sec_example, sec_info_value  # noqa: E402
 from treedb import config  # noqa: E402
 
 OUT_DOCX = config.ROOT / "docs" / "BaoCao1_Nhom27_NoiDung1-2.docx"
+SEG_REF = "mục 3.6"
 
 
 def toc(r: Report):
@@ -33,8 +34,9 @@ def toc(r: Report):
         "3. Các bộ đặc trưng nhận diện cây (Nội dung 2)",
         "    3.1. Định hướng thiết kế",
         "    3.2 – 3.5. Bốn bộ đặc trưng: màu sắc, hình dạng, kết cấu/bố cục, embedding sâu",
-        "    3.6. Đánh giá định lượng giá trị thông tin của các đặc trưng",
-        "    3.7. Ví dụ minh hoạ: đặc trưng tìm sự tương đồng và sự khác biệt",
+        "    3.6. Tách vùng cây khỏi nền – tiền đề của các đặc trưng vật thể",
+        "    3.7. Đánh giá định lượng giá trị thông tin của các đặc trưng",
+        "    3.8. Ví dụ minh hoạ: đặc trưng tìm sự tương đồng và sự khác biệt",
         "4. Kết luận và kế hoạch cho Báo cáo 2",
     ]:
         r.p(it)
@@ -56,11 +58,29 @@ def sec_scope(r: Report, ctx: dict):
         "thể về từng loại đặc trưng này cùng giá trị thông tin của các đặc trưng được sử dụng.",
     ])
     n_db = ctx["db"]["images"]
-    r.p(f"Kết quả chính: bộ dữ liệu {n_db} ảnh JPEG {config.IMAGE_SIZE}×{config.IMAGE_SIZE} đã tách nền (đạt yêu cầu ≥ "
+    r.p(f"Kết quả chính: bộ dữ liệu {n_db} ảnh JPEG {config.IMAGE_SIZE}×{config.IMAGE_SIZE} (đạt yêu cầu ≥ "
         f"{config.MIN_IMAGES}) kèm {len(ctx['queries'])} ảnh truy vấn thử tách riêng; bốn bộ đặc trưng (màu sắc, "
         "hình dạng, kết cấu/bố cục, embedding sâu) được định nghĩa, cài đặt và đánh giá giá trị thông tin bằng số "
         "liệu. Mã nguồn trích rút và CSDL đặc trưng (nội dung 3) đã được cài đặt sẵn để phục vụ các phép đo trong "
         "báo cáo này và sẽ được trình bày chi tiết ở Báo cáo 2.")
+
+
+def sec_segmentation(r: Report, ctx: dict):
+    seg = ctx.get("seg_stats", {})
+    r.h(2, "3.6. Tách vùng cây khỏi nền – tiền đề của các đặc trưng vật thể")
+    r.p("Theo lý thuyết truy vấn ảnh dựa trên màu sắc, biểu đồ màu toàn ảnh chịu “hiệu ứng che mặt”: các ô màu "
+        "lớn của nền (trời, cỏ) lấn át màu của vật thể. Vì vậy các khối hsv_fg, moments, toàn bộ bộ hình dạng và "
+        "bộ kết cấu được tính trên mặt nạ vùng cây. Mặt nạ được tạo bằng mô hình phân đoạn ngữ nghĩa SegFormer-b0 "
+        "huấn luyện sẵn trên ADE20K (lớp “tree”), sau đó lọc hình thái, giữ thành phần liên thông lớn và gần tâm "
+        "ảnh nhất, lấp lỗ để được hình bao của cây; GrabCut là phương án dự phòng."
+        + (f" Trên {sum(seg.values())} ảnh trước cổng kiểm soát: SegFormer {seg.get('segformer', 0)}, GrabCut "
+           f"{seg.get('grabcut', 0)}, không tìm thấy cây {seg.get('default_rect', 0)} (bị loại)." if seg else ""))
+    r.p("Trong quá trình kiểm tra giá trị thông tin (mục 3.7), nhóm phát hiện phiên bản đầu dùng GrabCut làm bước "
+        "chính khiến 135/639 ảnh (21%) có vector hình dạng trùng hệt nhau: GrabCut chỉ dựa vào màu nên không tách "
+        "được tán lá khỏi cỏ cùng màu hoặc khi tán chạm mép ảnh, và hệ thống rơi về mặt nạ chữ nhật mặc định. Việc "
+        "chuyển sang mô hình ngữ nghĩa loại bỏ hoàn toàn lỗi này và làm tăng độ chính xác của mọi bộ đặc trưng "
+        "thủ công.")
+    r.figure(FIG / "03_segmentation.png", "Ví dụ tách vùng cây: ảnh gốc (trên) và mặt nạ vùng cây (dưới)", 16)
 
 
 def sec_conclusion(r: Report, ctx: dict):
@@ -68,7 +88,7 @@ def sec_conclusion(r: Report, ctx: dict):
     best = max(fa["sets"].items(), key=lambda kv: kv[1]["nn1_acc"])
     r.h(1, "4. Kết luận và kế hoạch cho Báo cáo 2")
     r.p(f"Nội dung 1: bộ dữ liệu {ctx['db']['images']} ảnh cây thân gỗ trưởng thành đơn lẻ, cùng kích thước "
-        f"{config.IMAGE_SIZE}×{config.IMAGE_SIZE}, cây nằm giữa ảnh, chụp ngang, đã tách nền (cây trên nền trắng), có siêu dữ liệu nguồn/giấy phép và "
+        f"{config.IMAGE_SIZE}×{config.IMAGE_SIZE}, cây nằm giữa ảnh, chụp ngang, có siêu dữ liệu nguồn/giấy phép và "
         "nhãn chi; điểm giống và khác giữa các cây được mô tả cả định tính lẫn định lượng theo chi và theo nhóm lá "
         "rộng/lá kim.")
     r.p(f"Nội dung 2: bốn bộ đặc trưng gồm {sum(v['dim'] for v in fa['sets'].values())} chiều, mỗi khối được giải "
@@ -86,10 +106,11 @@ def build(ctx: dict) -> Path:
     cover(r, ctx, title="BÁO CÁO 1 – NỘI DUNG 1 VÀ 2", note="Hạn nộp: 22/10/2026 (10% điểm học phần)")
     toc(r)
     sec_scope(r, ctx)
-    sec_dataset(r, ctx)
-    sec_features(r, ctx, with_analysis=False)
-    sec_info_value(r, ctx["feature_analysis"], "3.6")
-    sec_example(r, ctx["feature_analysis"], "3.7")
+    sec_dataset(r, ctx, seg_ref=SEG_REF)
+    sec_features(r, ctx, seg_ref=SEG_REF, with_analysis=False)
+    sec_segmentation(r, ctx)
+    sec_info_value(r, ctx["feature_analysis"], "3.7")
+    sec_example(r, ctx["feature_analysis"], "3.8")
     sec_conclusion(r, ctx)
     return r.save(OUT_DOCX)
 
