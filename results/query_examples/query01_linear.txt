@@ -10,4 +10,4 @@ Backend: linear  | ung vien: 627/627  | trong so: color=0.30, shape=0.25, textur
  3 tree_0068.jpg  Juglans       0.560   0.785 |     0.923     0.893     0.672     0.602
  4 tree_0057.jpg  Juglans       0.558   0.792 |     0.802     0.967     0.683     0.691
  5 tree_0428.jpg                0.556   0.798 |     0.784     0.785     0.827     0.804
-Thoi gian (ms): load_normalize=5.1, segment=163.3, extract_color=48.6, extract_shape=58.2, extract_texture=116.0, extract_deep=53.6, candidates=0.0, distance_rank=7.6, total=453.3
+Thoi gian (ms): load_normalize=5.9, segment=145.2, extract_color=44.8, extract_shape=42.5, extract_texture=93.9, extract_deep=45.7, candidates=0.0, distance_rank=5.7, total=384.4

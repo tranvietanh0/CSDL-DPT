@@ -1,0 +1,26 @@
+# Giao dien demo (streamlit run app/streamlit_app.py) - mau xanh la theo chu de cay
+[server]
+headless = true
+
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "viewer"
+
+[theme]
+base = "light"
+primaryColor = "#2f6f45"
+backgroundColor = "#f6f7f2"
+secondaryBackgroundColor = "#e7f2e3"
+textColor = "#1d2a22"
+borderColor = "#dfe6dc"
+baseRadius = "0.75rem"
+font = "'Be Vietnam Pro', sans-serif"
+
+[theme.sidebar]
+backgroundColor = "#1f4d36"
+secondaryBackgroundColor = "#2a5e43"
+textColor = "#eef5ec"
+primaryColor = "#9fd27f"
+borderColor = "#3b6f53"

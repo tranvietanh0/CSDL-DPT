@@ -17,13 +17,19 @@ ALPHA, BETA, GAMMA = 1.0, 0.75, 0.25
 
 def rocchio(q: np.ndarray, relevant: np.ndarray | None, nonrelevant: np.ndarray | None,
             alpha: float = ALPHA, beta: float = BETA, gamma: float = GAMMA) -> np.ndarray:
-    """q (d,), relevant / nonrelevant (n, d) hoac None -> vector truy van moi (d,)."""
-    out = alpha * q.astype(np.float64)
+    """q (d,), relevant / nonrelevant (n, d) hoac None -> vector truy van moi (d,).
+
+    Chia cho tong he so (alpha + beta - gamma) de q' giu cung thang do voi vector trong CSDL: neu khong,
+    q' bi phong to ~1.75 lan va khoang cach L2 (bo hinh dang / ket cau) tang vot du huong da dung.
+    """
+    out, total = alpha * q.astype(np.float64), alpha
     if relevant is not None and len(relevant):
         out += beta * relevant.mean(axis=0)
+        total += beta
     if nonrelevant is not None and len(nonrelevant):
         out -= gamma * nonrelevant.mean(axis=0)
-    return out.astype(np.float32)
+        total -= gamma
+    return (out / total).astype(np.float32)
 
 
 def renormalize_histograms(v: np.ndarray, layout: list[tuple[str, int]], hist_blocks: set[str]) -> np.ndarray:

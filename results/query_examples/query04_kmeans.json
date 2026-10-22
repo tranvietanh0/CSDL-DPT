@@ -193,15 +193,15 @@
     ]
   },
   "timing_ms": {
-    "load_normalize": 5.051799991633743,
-    "segment": 184.5912999997381,
-    "extract_color": 33.910300000570714,
-    "extract_shape": 14.699699997436255,
-    "extract_texture": 46.7447999981232,
-    "extract_deep": 5.650100007187575,
-    "candidates": 0.9413000079803169,
-    "distance_rank": 1.1639999866019934,
-    "total": 293.40460000094026
+    "load_normalize": 15.6309999874793,
+    "segment": 216.99179999995977,
+    "extract_color": 58.29770001582801,
+    "extract_shape": 16.838900046423078,
+    "extract_texture": 35.61830002581701,
+    "extract_deep": 4.381199949420989,
+    "candidates": 0.4676000098697841,
+    "distance_rank": 0.9929999941959977,
+    "total": 349.75789999589324
   },
   "results": [
     {

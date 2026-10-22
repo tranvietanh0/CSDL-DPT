@@ -10,4 +10,4 @@ Backend: kmeans  | ung vien: 159/627  | trong so: color=0.30, shape=0.25, textur
  3 tree_0038.jpg  Quercus       0.585   0.709 |     0.770     0.602     0.686     0.760
  4 tree_0533.jpg                0.581   0.722 |     0.815     0.652     0.644     0.742
  5 tree_0078.jpg  Populus       0.578   0.731 |     0.954     0.715     0.711     0.497
-Thoi gian (ms): load_normalize=5.1, segment=184.6, extract_color=33.9, extract_shape=14.7, extract_texture=46.7, extract_deep=5.7, candidates=0.9, distance_rank=1.2, total=293.4
+Thoi gian (ms): load_normalize=15.6, segment=217.0, extract_color=58.3, extract_shape=16.8, extract_texture=35.6, extract_deep=4.4, candidates=0.5, distance_rank=1.0, total=349.8
