@@ -15,7 +15,7 @@ from PIL import Image  # noqa: E402
 
 from . import config, db  # noqa: E402
 from .features import load_rgb, split_blocks  # noqa: E402
-from .segment import foreground_mask, overlay  # noqa: E402
+from .segment import overlay, remove_background  # noqa: E402
 
 plt.rcParams["font.family"] = "DejaVu Sans"
 plt.rcParams["font.size"] = 9
@@ -33,7 +33,8 @@ def _save(fig, out):
 # 1. Bo du lieu
 # ---------------------------------------------------------------------------------------
 def plot_dataset_samples(out, n: int = 24, seed: int = 1):
-    rows = list(csv.DictReader(open(config.MANIFEST, encoding="utf-8")))
+    rows = [r for r in csv.DictReader(open(config.MANIFEST, encoding="utf-8"))
+            if (config.NOBG_DIR / r["filename"]).exists()]   # chi anh qua cong kiem soat (co trong CSDL)
     rng = np.random.default_rng(seed)
     pick = rng.choice(len(rows), size=min(n, len(rows)), replace=False)
     cols = 6
@@ -41,12 +42,12 @@ def plot_dataset_samples(out, n: int = 24, seed: int = 1):
     fig, axes = plt.subplots(r, cols, figsize=(cols * 2.2, r * 2.4))
     for ax, i in zip(axes.flat, pick):
         row = rows[i]
-        ax.imshow(Image.open(config.IMG_DIR / row["filename"]))
+        ax.imshow(Image.open(config.NOBG_DIR / row["filename"]))
         ax.set_title(f"{row['filename']}\n{row['genus'] or '(chưa rõ chi)'}", fontsize=7)
         ax.axis("off")
     for ax in axes.flat[len(pick):]:
         ax.axis("off")
-    fig.suptitle(f"Mẫu ảnh trong bộ dữ liệu ({config.IMAGE_SIZE}×{config.IMAGE_SIZE}, cây nằm giữa ảnh)")
+    fig.suptitle(f"Mẫu ảnh trong CSDL ({config.IMAGE_SIZE}×{config.IMAGE_SIZE}, đã tách nền, cây nằm giữa ảnh)")
     return _save(fig, out)
 
 
@@ -84,17 +85,20 @@ def plot_dataset_stats(conn, out):
 
 
 def plot_segmentation_examples(out, filenames: list[str]):
-    fig, axes = plt.subplots(2, len(filenames), figsize=(2.6 * len(filenames), 5.4))
+    fig, axes = plt.subplots(3, len(filenames), figsize=(2.6 * len(filenames), 8.0))
     for j, fn in enumerate(filenames):
         rgb = load_rgb(config.IMG_DIR / fn)
-        m = foreground_mask(rgb)
+        clean, m, _, _ = remove_background(rgb)
         axes[0, j].imshow(rgb)
         axes[0, j].set_title(fn, fontsize=8)
         axes[1, j].imshow(overlay(rgb, m))
-        axes[1, j].set_title(f"vùng cây = {m.mean():.1%}", fontsize=8)
+        axes[1, j].set_title(f"mặt nạ hình bao = {m.mean():.1%}", fontsize=8)
+        axes[2, j].imshow(clean)
+        axes[2, j].set_title("ảnh lưu trong CSDL", fontsize=8)
         for ax in axes[:, j]:
             ax.axis("off")
-    fig.suptitle("Phân đoạn vật thể (SegFormer, lớp tree + lọc hình thái): ảnh gốc (trên) và vùng cây (dưới, đỏ)")
+    fig.suptitle("Tách nền (SegFormer lớp tree + lọc hình thái): ảnh chuẩn hoá (trên), mặt nạ hình bao (giữa, đỏ), "
+                 "ảnh đã tách nền trên nền trắng (dưới)")
     fig.tight_layout()
     return _save(fig, out)
 
@@ -127,8 +131,8 @@ def plot_block_diagram(out):
     y = 0.70
     _box(ax, 0.03, y, 0.15, 0.13, "1. Thu thập ảnh\n(Wikimedia Commons,\nlọc theo quy tắc)")
     _box(ax, 0.22, y, 0.15, 0.13, "2. Tiền xử lý\n(EXIF, RGB, resize,\ncenter-crop 512×512,\nkhử trùng lặp)")
-    _box(ax, 0.41, y, 0.15, 0.13, "3. Phân đoạn\nvật thể / nền\n(SegFormer,\ndự phòng GrabCut)")
-    _box(ax, 0.60, y, 0.17, 0.13, "4. Trích rút đặc trưng\nMàu (513) · Hình dạng (113)\nKết cấu (85) · Embedding (1280)")
+    _box(ax, 0.41, y, 0.15, 0.13, "3. Tách nền\n(SegFormer,\ndự phòng GrabCut)\n→ cây trên nền trắng")
+    _box(ax, 0.60, y, 0.17, 0.13, "4. Trích rút đặc trưng\nMàu (369) · Hình dạng (113)\nKết cấu (85) · Embedding (1280)")
     _box(ax, 0.81, y, 0.16, 0.13, "5. CSDL SQLite\nimages · feature_sets\nfeatures · feature_stats", fc="#fff2cc",
          ec="#b8860b")
     _arrow(ax, 0.18, y + 0.065, 0.22, y + 0.065, "ảnh thô + metadata")
@@ -148,7 +152,7 @@ def plot_block_diagram(out):
                                 ls="--", lw=1))
     y2 = 0.27
     _box(ax, 0.03, y2, 0.12, 0.13, "Ảnh truy vấn\n(cây mới)", fc="#fde9d9", ec="#c0504d")
-    _box(ax, 0.18, y2, 0.14, 0.13, "Q1. Tiền xử lý +\nphân đoạn\n(giống bước 2-3)")
+    _box(ax, 0.18, y2, 0.14, 0.13, "Q1. Tiền xử lý +\ntách nền\n(giống bước 2-3)")
     _box(ax, 0.35, y2, 0.15, 0.13, "Q2. Trích rút đặc trưng\n(giống bước 4)")
     _box(ax, 0.53, y2, 0.16, 0.13, "Q3. Chọn ứng viên\nlinear / k-d / R / tứ phân\n/ K-means + lọc")
     _box(ax, 0.72, y2, 0.14, 0.13, "Q4. Tính khoảng cách\nL1 · L2 · cosine\nchuẩn hoá, trọng số\nD = Σ wₛ·dₛ/scaleₛ")
@@ -179,24 +183,24 @@ def plot_query_features(res: dict, out):
     fig = plt.figure(figsize=(14, 8))
     gs = fig.add_gridspec(3, 4, hspace=0.55, wspace=0.3)
     ax = fig.add_subplot(gs[0, 0])
-    ax.imshow(rgb)
+    ax.imshow(q.get("original", rgb))
     ax.set_title("Ảnh truy vấn (đã chuẩn hoá)")
     ax.axis("off")
     ax = fig.add_subplot(gs[0, 1])
-    ax.imshow(overlay(rgb, mask))
-    ax.set_title(f"Vùng cây ({mask.mean():.1%})")
+    ax.imshow(rgb)
+    ax.set_title(f"Sau tách nền (vùng cây {mask.mean():.1%})")
     ax.axis("off")
     if "color" in F:
         b = F["color"]["blocks"]
         ax = fig.add_subplot(gs[0, 2:])
-        ax.bar(range(72), b["hsv_global"], color="#4c9a2a", width=1.0)
-        ax.set_title("Màu: biểu đồ HSV toàn cục 8×3×3 = 72 ô (chuẩn hoá L1)")
+        ax.bar(range(72), b["hsv_fg"], color="#4c9a2a", width=1.0)
+        ax.set_title("Màu: biểu đồ HSV 8×3×3 = 72 ô của vùng cây (chuẩn hoá L1)")
         ax.set_xlabel("ô màu j (H·9 + S·3 + V)")
         ax = fig.add_subplot(gs[1, 0])
-        ax.bar(range(72), b["hsv_fg"], color="#2a7f2a", width=1.0, label="vật thể")
-        ax.bar(range(72), -b["hsv_bg"], color="#5b9bd5", width=1.0, label="nền")
-        ax.set_title("Màu: biểu đồ vật thể (+) / nền (−)")
-        ax.legend(fontsize=7)
+        ax.bar(range(144), b["hsv_grid"], color="#2a7f2a", width=1.0)
+        for k in range(1, 9):
+            ax.axvline(16 * k - 0.5, color="#999", lw=0.5)
+        ax.set_title("Màu: lưới 3×3 trên hộp bao cây (9 × 16 ô)")
     if "shape" in F:
         b = F["shape"]["blocks"]
         ax = fig.add_subplot(gs[1, 1])

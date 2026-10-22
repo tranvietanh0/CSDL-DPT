@@ -48,7 +48,7 @@ số; hình và bảng có chú thích đánh số (Hình 1, Bảng 1…), công
 **Phần chính**
 
 1. **Ảnh truy vấn**: chọn *Tải ảnh lên* hoặc *Ảnh trong CSDL*, rồi bấm **Thực hiện truy vấn**.
-2. **Tiền xử lý và thông số**: Hình 1 (ảnh chuẩn hoá và mặt nạ vùng cây) và Bảng 1 (thông số lần truy vấn).
+2. **Tiền xử lý và thông số**: Hình 1 (ảnh chuẩn hoá và ảnh sau tách nền) và Bảng 1 (thông số lần truy vấn).
 3. **Kết quả**: lưới K ảnh giống nhất.
 4. **Phản hồi liên quan**: công thức Rocchio và nút truy vấn lại.
 5. **Chi tiết tính toán**: các tab Bảng khoảng cách, Công thức, Thời gian xử lý, Giá trị trung gian, Chỉ mục,
@@ -60,7 +60,7 @@ số; hình và bảng có chú thích đánh số (Hình 1, Bảng 1…), công
 
 1. Ở mục 1 chọn **Tải ảnh lên**, bấm **Upload** và chọn file `.jpg`, `.jpeg` hoặc `.png` (ảnh chụp ngang, một cây nằm giữa khung cho kết quả tốt nhất).
 2. Bấm **Thực hiện truy vấn**.
-3. Đợi khoảng 0,7–1,0 giây (bước phân đoạn SegFormer và trích rút đặc trưng chiếm phần lớn thời gian).
+3. Đợi khoảng 0,7–1,0 giây (bước tách nền bằng SegFormer và trích rút đặc trưng chiếm phần lớn thời gian).
 
 Mười ảnh thử không nằm trong CSDL có sẵn ở `data/queries/` để dùng ngay.
 
@@ -76,8 +76,8 @@ Sau khi đổi cấu trúc chỉ mục, K, trọng số hoặc ràng buộc, gia
 
 ## 5. Đọc kết quả
 
-- **Hình 1 – ảnh chuẩn hoá và mặt nạ vùng cây**: vùng đỏ là phần được coi là cây.
-  Nếu vùng đỏ lệch nhiều (bao cả cỏ, bỏ sót tán) thì kết quả các bộ hình dạng/kết cấu sẽ kém tin cậy.
+- **Hình 1 – ảnh chuẩn hoá và ảnh sau tách nền**: ảnh bên phải chỉ còn cây trên nền trắng, giống ảnh trong CSDL.
+  Nếu ảnh sau tách nền lệch nhiều (còn cỏ, mất một phần tán) thì kết quả các bộ hình dạng/kết cấu sẽ kém tin cậy.
 - **Bảng 1 – thông số truy vấn**: tỉ lệ vùng cây, cấu trúc chỉ mục, số ứng viên đã xét / |CSDL|, trọng số, thời gian, ràng buộc (nếu có).
 - **Lưới kết quả (mục 3)**: mỗi ô ghi hạng, chi (in nghiêng), ảnh và một bảng nhỏ gồm `sim` (độ tương đồng
   `sim = 1/(1+D)`, càng gần 1 càng giống), `D` và `d̃` của từng bộ đặc trưng, cuối cùng là tên file.
@@ -129,6 +129,6 @@ In bảng kết quả ra màn hình, ghi toàn bộ giá trị trung gian vào `
 | Trang báo CSDL trống hoặc thiếu chỉ mục | chạy `python scripts/extract_features.py` rồi `python scripts/build_index.py`, khởi động lại |
 | `Port 8501 is already in use` | thêm `--server.port <cổng khác>` |
 | Thiếu bộ `deep` trong thanh bên | model chưa tải được (không có Internet); hệ thống vẫn chạy với 3 bộ còn lại, chạy lại `extract_features.py` khi có mạng |
-| Vùng cây (mask) sai nhiều | ảnh không có cây rõ ở giữa hoặc nền quá giống tán; thử ảnh khác hoặc giảm trọng số shape/texture |
+| Ảnh sau tách nền sai nhiều (mất cây hoặc còn nền) | ảnh không có cây rõ ở giữa hoặc nền quá giống tán; thử ảnh khác hoặc giảm trọng số shape/texture |
 | Kết quả không đổi sau khi chỉnh trọng số | phải bấm lại **Thực hiện truy vấn** |
 | Ảnh tải lên bị mất sau khi tắt app | ảnh tạm được lưu ở `results/tmp/`, có thể xoá thoải mái |

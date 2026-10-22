@@ -1,7 +1,7 @@
 {
   "kdtree": {
     "pca_dim": 32,
-    "explained_variance": 0.6087305073598388,
+    "explained_variance": 0.6277829775537155,
     "n": 627,
     "sets": [
       "color",
@@ -15,34 +15,34 @@
       "texture": 0.2,
       "deep": 0.25
     },
-    "built_at": "2026-10-22T01:47:16"
+    "built_at": "2026-10-22T16:40:11"
   },
   "rtree": {
     "pca_dim": 8,
-    "explained_variance": 0.3425357014472301,
+    "explained_variance": 0.3849549566815917,
     "n_leaves": 64,
     "height": 3,
-    "built_at": "2026-10-22T01:47:16"
+    "built_at": "2026-10-22T16:40:11"
   },
   "quadtree": {
     "pca_dim": 2,
-    "explained_variance": 0.1300734081869974,
-    "n_leaves": 169,
+    "explained_variance": 0.1802393976063435,
+    "n_leaves": 160,
     "depth": 5,
-    "built_at": "2026-10-22T01:47:16"
+    "built_at": "2026-10-22T16:40:11"
   },
   "kmeans": {
     "k": 8,
-    "inertia": 595.9044620194403,
+    "inertia": 555.6146283720219,
     "sizes": [
-      55,
-      89,
-      108,
-      105,
-      63,
-      101,
-      55,
-      51
+      100,
+      43,
+      134,
+      76,
+      95,
+      49,
+      70,
+      60
     ],
     "n": 627,
     "sets": [
@@ -57,6 +57,6 @@
       "texture": 0.2,
       "deep": 0.25
     },
-    "built_at": "2026-10-22T01:47:31"
+    "built_at": "2026-10-22T16:40:21"
   }
 }

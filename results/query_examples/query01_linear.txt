@@ -1,13 +1,13 @@
 Anh truy van: C:\Projects\MyProject\CSDL-DPT\data\queries\query_01.jpg  (ti le vung cay: 44.52%)
 Backend: linear  | ung vien: 627/627  | trong so: color=0.30, shape=0.25, texture=0.20, deep=0.25
-  dac trung [color] dim=513: hsv_global(72), hsv_grid(144), hsv_fg(72), hsv_bg(72), hsv_cum(72), pwh(72), moments(9)
+  dac trung [color] dim=369: hsv_fg(72), hsv_grid(144), hsv_cum(72), pwh(72), moments(9)
   dac trung [shape] dim=113: region(10), hu(7), grid(64), fourier(16), profile(16)
   dac trung [texture] dim=85: glcm(10), lbp(28), edge(9), tamura(3), dct(35)
   dac trung [deep] dim=1280: mobilenetv2_gap(1280)
  # anh            chi             sim       D |     color     shape   texture      deep
- 1 tree_0372.jpg                0.567   0.763 |     0.760     0.802     0.774     0.719
- 2 tree_0198.jpg  Populus       0.560   0.785 |     0.829     0.804     0.845     0.663
- 3 tree_0068.jpg  Juglans       0.560   0.785 |     0.923     0.893     0.672     0.602
- 4 tree_0057.jpg  Juglans       0.558   0.792 |     0.802     0.967     0.683     0.691
- 5 tree_0428.jpg                0.556   0.798 |     0.784     0.785     0.827     0.804
-Thoi gian (ms): load_normalize=5.9, segment=145.2, extract_color=44.8, extract_shape=42.5, extract_texture=93.9, extract_deep=45.7, candidates=0.0, distance_rank=5.7, total=384.4
+ 1 tree_0085.jpg  Quercus       0.584   0.712 |     0.681     0.786     0.740     0.655
+ 2 tree_0068.jpg  Juglans       0.582   0.719 |     0.668     0.893     0.653     0.659
+ 3 tree_0057.jpg  Juglans       0.578   0.730 |     0.444     0.967     0.756     0.815
+ 4 tree_0084.jpg  Quercus       0.576   0.736 |     0.645     0.911     0.740     0.668
+ 5 tree_0041.jpg  Juglans       0.575   0.740 |     0.658     0.846     0.744     0.730
+Thoi gian (ms): load_normalize=4.1, remove_background=303.3, extract_color=59.0, extract_shape=79.4, extract_texture=102.9, extract_deep=40.3, candidates=0.0, distance_rank=5.5, total=595.3

@@ -10,7 +10,7 @@ FIG = config.FIG_DIR
 SET_VI = {"color": "Màu sắc", "shape": "Hình dạng", "texture": "Kết cấu / bố cục", "deep": "Embedding sâu"}
 BLOCK_VI = {
     "hsv_global": "biểu đồ HSV toàn ảnh", "hsv_grid": "biểu đồ HSV theo lưới 3×3", "hsv_fg": "biểu đồ HSV vùng cây",
-    "hsv_bg": "biểu đồ HSV nền", "moments": "moment màu", "region": "thước đo vùng", "hu": "moment Hu",
+    "hsv_bg": "biểu đồ HSV nền", "hsv_cum": "biểu đồ HSV luỹ tích", "pwh": "biểu đồ theo trọng số PWH", "moments": "moment màu", "region": "thước đo vùng", "hu": "moment Hu",
     "grid": "lưới nhị phân 8×8", "fourier": "hệ số Fourier đường bao", "profile": "profile bề rộng",
     "glcm": "GLCM", "lbp": "LBP", "edge": "hướng cạnh + mật độ cạnh", "tamura": "Tamura", "dct": "DCT tần số thấp",
     "mobilenetv2_gap": "MobileNetV2 GAP",
@@ -104,8 +104,8 @@ def sec_info_value(r: Report, fa: dict, num: str):
         f"{_f(blocks[0]['nn1_acc'] / max(fa['nn1_chance'], 1e-9), 1)} lần ngẫu nhiên.",
         f"Khối có tỉ số Fisher lớn nhất là {best_fisher['block']} ({_f(best_fisher['fisher'])}): ít chiều nhưng mỗi "
         f"chiều tách chi tốt, nên là đặc trưng “tìm sự khác biệt” rất hiệu quả trên mỗi chiều lưu trữ.",
-        "Biểu đồ màu vùng cây (hsv_fg) giữ thông tin tốt hơn biểu đồ nền (hsv_bg): tách vật thể khỏi nền đúng như "
-        "lý thuyết khắc phục hiệu ứng che mặt của nền.",
+        "Sau khi tách nền, các khối màu chỉ mô tả chính cây; khối hsv_grid (màu theo vị trí trên tán) mang nhiều "
+        "thông tin hơn hsv_fg vì phân biệt được cả cách bố trí màu (thân lộ, ngọn sáng) chứ không chỉ tổng màu.",
         "Các khối hình dạng có 1-NN thấp hơn khi dùng riêng vì cùng một chi có nhiều dáng (tuổi cây, cắt tỉa, gió) "
         "và hình bao chỉ là hình chiếu 2D; chúng vẫn bổ sung thông tin độc lập với màu (không phụ thuộc mùa, ánh "
         "sáng) nên được giữ trong tổ hợp có trọng số."

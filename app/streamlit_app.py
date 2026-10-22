@@ -196,8 +196,8 @@ def pick_query_source() -> tuple[str | None, int | None]:
                         format_func=lambda i: f"{rows[i]['filename']} — {rows[i]['genus'] or 'chưa rõ chi'}")
     row = rows[pick]
     path = Path(str(row["path"]))
-    if not path.exists():  # đường dẫn lưu trong CSDL không còn đúng -> ghép lại từ IMG_DIR
-        path = Path(_mod("config").IMG_DIR) / str(row["filename"])
+    if not path.exists():  # đường dẫn lưu trong CSDL không còn đúng -> ghép lại từ NOBG_DIR
+        path = Path(_mod("config").NOBG_DIR) / str(row["filename"])
     st.image(str(path), width="stretch")
     exclude = st.checkbox("Loại chính ảnh này khỏi kết quả (leave-one-out)", value=True,
                           help="Ảnh vốn nằm trong CSDL: nếu không loại, nó luôn đứng hạng 1 với độ tương đồng 1,0.")
@@ -207,12 +207,12 @@ def pick_query_source() -> tuple[str | None, int | None]:
 def render_query(res: dict, num: Numbering) -> None:
     """Ảnh truy vấn + vùng cây và bảng thông số truy vấn."""
     q = res["query"]
-    if "rgb" in q:
+    if "original" in q:
         a, b = st.columns(2)
-        a.image(q["rgb"], width="stretch")
-        b.image(_mod("segment").overlay(q["rgb"], q["mask"]), width="stretch")
-        st.html(num.figure("Ảnh truy vấn sau chuẩn hoá 512×512 (trái) và mặt nạ vùng cây dùng cho đặc trưng "
-                           "vật thể (phải, tô đỏ)."))
+        a.image(q["original"], width="stretch")
+        b.image(q["rgb"], width="stretch")
+        st.html(num.figure("Ảnh truy vấn sau chuẩn hoá 512×512 (trái) và sau tách nền: chỉ còn cây trên nền "
+                           "trắng, giống ảnh trong CSDL (phải)."))
     total = res["timing_ms"].get("total", sum(res["timing_ms"].values()))
     params = pd.DataFrame([
         {"thông số": "Tỉ lệ vùng cây", "giá trị": f"{q.get('mask_coverage', 0):.1%}"},

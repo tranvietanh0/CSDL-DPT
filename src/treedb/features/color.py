@@ -1,11 +1,12 @@
 """Bo dac trung 1 - MAU SAC (slide bai 11, tr.9-18).
 
-Cac khoi (block) trong vector mau, tong 513 chieu:
-  hsv_global   72  : bieu do tan suat mau HSV luong tu hoa H=8, S=3, V=3 muc  (n = 8*3*3 o mau)
-  hsv_grid    144  : bieu do mau theo 9 vung (luoi 3x3), moi vung 4*2*2 = 16 o  -> quan he khong gian
-  hsv_fg       72  : bieu do mau rieng cua VAT THE (tan cay)                       -> tranh hieu ung che mat
-  hsv_bg       72  : bieu do mau rieng cua HINH NEN (troi, dat)
-  hsv_cum      72  : bieu do tan suat LUY TICH cua vat the ch_i = sum_{j<=i} h_j (slide tr.15), chia cho 72
+Anh trong CSDL da duoc tach nen (cay tren nen trang), nen moi khoi chi tinh tren cac pixel cay
+(mask = pixel cay); nen trang khong mang thong tin nen khong co bieu do toan anh / bieu do nen.
+Cac khoi (block) trong vector mau, tong 369 chieu:
+  hsv_fg       72  : bieu do tan suat mau HSV cua cay, luong tu hoa H=8, S=3, V=3 muc (n = 8*3*3 o mau)
+  hsv_grid    144  : bieu do mau cua cay theo 9 vung cua hop bao (luoi 3x3), moi vung 4*2*2 = 16 o
+                     -> quan he khong gian: ngon / than, ria trai / phai tan
+  hsv_cum      72  : bieu do tan suat LUY TICH cua cay ch_i = sum_{j<=i} h_j (slide tr.15), chia cho 72
                      de cung thang voi cac khoi khac -> hai mau lan can khong con roi vao hai o "khong lien quan"
   pwh          72  : bieu do tan suat theo TRONG SO (PWH, slide tr.15): 72 mau dai dien = tam cac o HSV; moi
                      diem anh cua cay gop trong so 1/khoang cach (CIE Lab) vao PWH_NEAREST mau dai dien gan nhat
@@ -17,6 +18,8 @@ from __future__ import annotations
 
 import cv2
 import numpy as np
+
+from ..segment import mask_bbox
 
 HSV_BINS = (8, 3, 3)
 GRID = 3
@@ -49,13 +52,16 @@ def hsv_hist(hsv: np.ndarray, mask: np.ndarray | None = None, bins=HSV_BINS) -> 
     return h / s if s > 0 else h
 
 
-def grid_hist(hsv: np.ndarray, grid: int = GRID, bins=GRID_BINS) -> np.ndarray:
+def grid_hist(hsv: np.ndarray, mask: np.ndarray, grid: int = GRID, bins=GRID_BINS) -> np.ndarray:
+    """Luoi 3x3 tren hop bao cua cay; o khong co pixel cay -> vector 0."""
+    t, l, b, r = mask_bbox(mask)
+    hsv, mask = hsv[t:b, l:r], mask[t:b, l:r]
     H, W = hsv.shape[:2]
     out = []
     for i in range(grid):
         for j in range(grid):
-            cell = hsv[i * H // grid:(i + 1) * H // grid, j * W // grid:(j + 1) * W // grid]
-            out.append(hsv_hist(cell, None, bins))
+            ys, xs = slice(i * H // grid, (i + 1) * H // grid), slice(j * W // grid, (j + 1) * W // grid)
+            out.append(hsv_hist(np.ascontiguousarray(hsv[ys, xs]), mask[ys, xs], bins))
     return np.concatenate(out)
 
 
@@ -90,10 +96,8 @@ def extract(rgb: np.ndarray, mask: np.ndarray) -> tuple[np.ndarray, list[tuple[s
     hsv = to_hsv(rgb)
     fg = hsv_hist(hsv, mask)
     blocks = [
-        ("hsv_global", hsv_hist(hsv)),
-        ("hsv_grid", grid_hist(hsv)),
         ("hsv_fg", fg),
-        ("hsv_bg", hsv_hist(hsv, ~mask)),
+        ("hsv_grid", grid_hist(hsv, mask)),
         ("hsv_cum", cumulative_hist(fg)),
         ("pwh", weighted_hist(rgb, mask)),
         ("moments", color_moments(hsv, mask)),
