@@ -21,9 +21,10 @@ from report_analysis_sections import sec_example, sec_info_value, sec_quant_data
 from treedb import config, db  # noqa: E402
 
 FIG = config.FIG_DIR
+ASSETS = config.ROOT / "docs" / "assets"  # logo PTIT + khung bia
 OUT_DOCX = config.ROOT / "docs" / "BaoCao_HeCSDL_AnhCay.docx"
 SOFFICE = Path(r"C:\Program Files\LibreOffice\program\soffice.exe")
-GROUP = {"name": "Nhóm 27", "class": "D23 – Lớp 2",
+GROUP = {"name": "Nhóm 27", "class": "D23 – Lớp 2", "class_no": "02", "no": "27",
          "members": [("Nguyễn Văn Đăng", "B23DCCN119"), ("Trịnh Anh Tú", "B23DCCN876"), ("Trần Việt Anh", "B23DCCN050")]}
 
 
@@ -81,27 +82,46 @@ def f3(x: float) -> str:
 # Cac phan cua bao cao
 # ---------------------------------------------------------------------------------------
 def cover(r: Report, ctx: dict, title: str = "BÁO CÁO BÀI TẬP LỚN", note: str = ""):
-    r.p("HỌC VIỆN CÔNG NGHỆ BƯU CHÍNH VIỄN THÔNG", bold=True, align="center", size=14)
-    r.p("KHOA CÔNG NGHỆ THÔNG TIN", bold=True, align="center", size=13)
-    for _ in range(5):
-        r.p()
-    r.p(title, bold=True, align="center", size=16)
-    r.p("MÔN HỌC: HỆ CƠ SỞ DỮ LIỆU ĐA PHƯƠNG TIỆN", bold=True, align="center", size=14)
-    r.p()
-    r.p("ĐỀ TÀI", align="center", size=13)
-    r.p("XÂY DỰNG HỆ CSDL LƯU TRỮ VÀ TÌM KIẾM ẢNH CÂY THÂN GỖ THEO NỘI DUNG", bold=True, align="center", size=16)
+    """Bia theo mau PTIT: khung trang tri, logo, ten de tai, bang thong tin nhom."""
+    from docx.enum.table import WD_TABLE_ALIGNMENT
+    from docx.shared import Cm, Pt
+
+    r.cover_frame(ASSETS / "cover_frame.jpg", 17.67, 24.13)
+
+    def line(text, size, before=0, after=0, bold=True):
+        para = r.p(text, bold=bold, align="center", size=size)
+        para.paragraph_format.space_before, para.paragraph_format.space_after = Pt(before), Pt(after)
+        para.paragraph_format.line_spacing = 1.0
+
+    line("HỌC VIỆN CÔNG NGHỆ BƯU CHÍNH VIỄN THÔNG", 15, before=45, after=3)
+    line("KHOA CÔNG NGHỆ THÔNG TIN", 13)
+    logo = r.p(align="center")
+    logo.paragraph_format.space_before = Pt(25)
+    logo.add_run().add_picture(str(ASSETS / "ptit_logo.png"), width=Cm(3.6))
+    line(title, 20, before=25, after=6)
+    line("HỆ CƠ SỞ DỮ LIỆU ĐA PHƯƠNG TIỆN", 20, after=12)
+    line("Đề tài: Xây dựng hệ CSDL lưu trữ và", 18, after=3)
+    line("tìm kiếm ảnh cây thân gỗ theo nội dung", 18, after=3)
     if note:
-        r.p(note, italic=True, align="center", size=12)
-    for _ in range(3):
-        r.p()
-    r.p("Giảng viên hướng dẫn: Nguyễn Đình Hóa", align="center", size=13)
-    r.p(f"{GROUP['name']} – {GROUP['class']}", bold=True, align="center", size=13)
-    r.table(["STT", "Họ và tên", "Mã sinh viên"],
-            [[str(i), n, m] for i, (n, m) in enumerate(GROUP["members"], 1)], widths=[1.5, 6, 4],
-            align_center_cols={0, 2})
-    for _ in range(2):
-        r.p()
-    r.p("Hà Nội, 2026", align="center", size=13)
+        line(note, 14, before=20, after=20)
+    rows = [("Giảng viên hướng dẫn", "TS. Nguyễn Đình Hóa"), ("Nhóm lớp:", GROUP["class_no"]),
+            ("Nhóm:", GROUP["no"])]
+    rows += [("Họ tên và mã sinh viên:" if i == 0 else "", f"{n} – {m}") for i, (n, m) in enumerate(GROUP["members"])]
+    t = r.doc.add_table(rows=0, cols=2)
+    t.alignment = WD_TABLE_ALIGNMENT.CENTER
+    t.autofit = False
+    for col, w in zip(t._tbl.tblGrid.gridCol_lst, (5.6, 8.1)):
+        col.w = Cm(w)
+    for label, value in rows:
+        cells = t.add_row().cells
+        for cell, text, bold, w in ((cells[0], label, True, 5.6), (cells[1], f": {value}", False, 8.1)):
+            cell.width = Cm(w)
+            para = cell.paragraphs[0]
+            para.paragraph_format.space_after = Pt(0)
+            run = para.add_run(text)
+            run.bold, run.font.size = bold, Pt(14)
+    r.p()
+    line("Hà Nội, 2026", 14, before=40, bold=False)
     r.page_break()
 
 
