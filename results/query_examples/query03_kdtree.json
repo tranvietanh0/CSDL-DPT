@@ -143,15 +143,15 @@
     ]
   },
   "timing_ms": {
-    "load_normalize": 3.888999985065311,
-    "segment": 155.00850000535138,
-    "extract_color": 45.4537000041455,
-    "extract_shape": 27.15169999282807,
-    "extract_texture": 83.90470000449568,
-    "extract_deep": 5.215000011958182,
-    "candidates": 3.3159999875351787,
-    "distance_rank": 0.5522000137716532,
-    "total": 325.0752000021748
+    "load_normalize": 3.716600011102855,
+    "segment": 177.4279000237584,
+    "extract_color": 56.516400014515966,
+    "extract_shape": 28.92080001765862,
+    "extract_texture": 125.2243000199087,
+    "extract_deep": 7.15309998486191,
+    "candidates": 2.2320999996736646,
+    "distance_rank": 0.5868999869562685,
+    "total": 402.4351999978535
   },
   "results": [
     {

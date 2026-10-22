@@ -1,0 +1,52 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Noto+Serif:ital,wght@0,500;0,600;0,700;1,400;1,500&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --navy: #1f3a5f;
+  --ink: #1b1f24;
+  --muted: #5b6573;
+  --line: #d5dbe3;
+  --paper: #f3f5f8;
+}
+
+.stApp { color: var(--ink); }
+[data-testid="stHeader"] { background: transparent; }
+[data-testid="stToolbar"], [data-testid="stDecoration"], footer { display: none !important; }
+.block-container { padding-top: 1.6rem; max-width: 1240px; }
+h1, h2, h3, .serif { font-family: 'Noto Serif', serif !important; }
+
+/* ---- dau trang kieu bai bao ---- */
+.paper-head { border-bottom: 2px solid var(--navy); padding-bottom: .9rem; margin-bottom: .4rem; }
+.paper-head .venue { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.paper-head h1 { font-size: 1.7rem; font-weight: 700; color: var(--navy); margin: .25rem 0 .35rem; line-height: 1.3; }
+.paper-head .authors { font-size: .9rem; color: var(--ink); }
+.paper-head .authors span { color: var(--muted); }
+.abstract { background: var(--paper); border-left: 3px solid var(--navy); padding: .7rem 1rem; margin: .9rem 0 0;
+  font-size: .88rem; line-height: 1.55; }
+.abstract b { font-family: 'Noto Serif', serif; }
+.kv { display: flex; flex-wrap: wrap; gap: 1.4rem; margin-top: .7rem; font-size: .82rem; color: var(--muted); }
+.kv b { color: var(--ink); font-family: 'JetBrains Mono', monospace; font-weight: 500; }
+
+/* ---- muc, hinh, bang ---- */
+.sec { font-family: 'Noto Serif', serif; font-weight: 700; font-size: 1.15rem; color: var(--navy);
+  border-bottom: 1px solid var(--line); padding-bottom: .25rem; margin: 1.1rem 0 .7rem; }
+.cap { font-size: .8rem; color: var(--muted); text-align: center; margin-top: .2rem; }
+.cap b { color: var(--ink); }
+.note { font-size: .8rem; color: var(--muted); }
+.side-title { font-family: 'Noto Serif', serif; font-weight: 700; color: var(--navy); font-size: 1rem; line-height: 1.3; }
+.side-sub { font-size: .75rem; color: var(--muted); margin-bottom: .6rem; }
+.side-sec { font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+  border-bottom: 1px solid var(--line); padding-bottom: .2rem; margin: 1rem 0 .4rem; }
+
+/* ---- ket qua ---- */
+.res-head { display: flex; justify-content: space-between; align-items: baseline; font-size: .8rem; margin-bottom: .3rem; }
+.res-head .rk { font-family: 'Noto Serif', serif; font-weight: 700; color: var(--navy); }
+.res-head i { font-family: 'Noto Serif', serif; }
+.res-tab { width: 100%; border-collapse: collapse; font-size: .74rem; margin-top: .35rem; }
+.res-tab td { padding: .08rem 0; border-bottom: 1px dotted var(--line); }
+.res-tab td:last-child { text-align: right; font-family: 'JetBrains Mono', monospace; }
+.res-tab tr.main td { font-weight: 600; color: var(--navy); }
+[data-testid="stImage"] img { border-radius: 2px; border: 1px solid var(--line); }
+[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 4px !important; }
+.stTabs [data-baseweb="tab"] { font-weight: 600; }
+.stButton > button[kind="primary"] { font-weight: 600; letter-spacing: .02em; }
+.empty { text-align: center; padding: 2.2rem 1rem; color: var(--muted); font-size: .9rem; border: 1px dashed var(--line); }

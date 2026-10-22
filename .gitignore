@@ -6,6 +6,7 @@ data/_cache/
 results/tmp/
 models/
 *.log
-.streamlit/
+.streamlit/*
+!.streamlit/config.toml
 *.sqlite-wal
 *.sqlite-shm

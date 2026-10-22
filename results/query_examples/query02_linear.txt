@@ -10,4 +10,4 @@ Backend: linear  | ung vien: 627/627  | trong so: color=0.30, shape=0.25, textur
  3 tree_0518.jpg  Aesculus      0.619   0.616 |     0.771     0.570     0.538     0.538
  4 tree_0285.jpg  Quercus       0.617   0.619 |     0.484     0.583     0.615     0.822
  5 tree_0105.jpg  Quercus       0.614   0.629 |     0.520     0.569     0.649     0.802
-Thoi gian (ms): load_normalize=4.6, segment=153.3, extract_color=38.3, extract_shape=23.5, extract_texture=83.3, extract_deep=5.9, candidates=0.0, distance_rank=6.8, total=316.4
+Thoi gian (ms): load_normalize=4.3, segment=133.0, extract_color=35.4, extract_shape=20.4, extract_texture=63.0, extract_deep=4.4, candidates=0.0, distance_rank=5.0, total=266.2

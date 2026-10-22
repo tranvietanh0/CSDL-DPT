@@ -17,15 +17,15 @@
   "n_database": 627,
   "index_info": {},
   "timing_ms": {
-    "load_normalize": 4.630999988876283,
-    "segment": 153.3120000094641,
-    "extract_color": 38.3021000016015,
-    "extract_shape": 23.50850001676008,
-    "extract_texture": 83.27560001634993,
-    "extract_deep": 5.8732000179588795,
-    "candidates": 0.017799990018829703,
-    "distance_rank": 6.836199987446889,
-    "total": 316.44180000876077
+    "load_normalize": 4.342000000178814,
+    "segment": 133.00500001059845,
+    "extract_color": 35.437699989415705,
+    "extract_shape": 20.44899994507432,
+    "extract_texture": 62.961400020867586,
+    "extract_deep": 4.391699971165508,
+    "candidates": 0.018300022929906845,
+    "distance_rank": 5.030400003306568,
+    "total": 266.2108999793418
   },
   "results": [
     {
