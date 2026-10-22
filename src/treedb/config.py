@@ -35,6 +35,7 @@ TOP_K = 5
 KMEANS_K = 8
 KMEANS_MIN_CLUSTERS = 2   # so cum gan nhat toi thieu duoc quet khi truy van theo phan cum
 KDTREE_PCA_DIM = 32
+RTREE_PCA_DIM = 8     # cay R tren 8 thanh phan chinh dau (MBR mat hieu qua o so chieu cao)
 CANDIDATE_POOL = 60  # so ung vien lay tu chi muc (kd-tree / k-means) truoc khi xep hang chinh xac
 
 USER_AGENT = "TreeCBIR/1.0 (student project PTIT; contact manhnd@the1studio.org)"

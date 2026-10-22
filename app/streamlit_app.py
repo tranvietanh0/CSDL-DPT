@@ -14,7 +14,9 @@ import streamlit as st
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-BACKENDS = ("linear", "kdtree", "kmeans")
+BACKENDS = ("linear", "kdtree", "rtree", "quadtree", "kmeans")
+FILTER_LABELS = {"genus": "Chi (genus)", "group_label": "Nhóm hình thái", "license": "Giấy phép"}
+FEEDBACK_CHOICES = ("–", "✓", "✗")
 LOAD_ERRORS = (RuntimeError, ImportError, OSError, sqlite3.Error)  # CSDL trống -> báo lỗi thân thiện
 
 
@@ -73,7 +75,14 @@ def weight_sliders(names: list[str]) -> dict:
     return norm  # tổng = 1
 
 
-def render_sidebar(conn) -> dict:
+def filter_widgets(searcher) -> dict:
+    """Lọc kết quả theo siêu dữ liệu quan hệ (truy vấn kết hợp thuộc tính + nội dung)."""
+    st.sidebar.markdown("**Lọc theo siêu dữ liệu** (để trống = không lọc)")
+    values = searcher.filter_values()
+    return {f: set(st.sidebar.multiselect(label, values.get(f, []))) for f, label in FILTER_LABELS.items()}
+
+
+def render_sidebar(conn, searcher) -> dict:
     """Vẽ thanh bên và trả về cấu hình truy vấn người dùng đã chọn."""
     module = _mod("db")
     st.sidebar.title("Hệ CSDL ảnh cây – tìm kiếm theo nội dung")
@@ -88,8 +97,10 @@ def render_sidebar(conn) -> dict:
                                    index=BACKENDS.index(qp.get("backend")) if qp.get("backend") in BACKENDS else 0)
     top_k = st.sidebar.slider("Số kết quả (top-K)", 1, 10, int(_mod("config").TOP_K))
     weights = weight_sliders([fs["set_name"] for fs in sets])
+    filters = filter_widgets(searcher)
     debug = st.sidebar.checkbox("Hiển thị giá trị trung gian", value=qp.get("debug") == "1")
-    return {"backend": backend, "top_k": top_k, "weights": weights, "show_debug": debug}
+    return {"backend": backend, "top_k": top_k, "weights": weights, "show_debug": debug,
+            "filters": {k: v for k, v in filters.items() if v}}
 
 
 def save_upload(upload) -> str:
@@ -145,18 +156,42 @@ def results_table(res: dict) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def render_results(res: dict) -> None:
-    """Lưới ảnh kết quả + bảng số liệu chi tiết."""
+def render_results(res: dict) -> dict[int, str]:
+    """Lưới ảnh kết quả (kèm ô đánh giá phản hồi) + bảng số liệu; trả về {image_id: đánh giá}."""
     if not res["results"]:
-        st.warning("Không có kết quả nào (CSDL quá nhỏ hoặc đã loại hết ứng viên).")
-        return
+        st.warning("Không có kết quả nào (CSDL quá nhỏ, bộ lọc quá chặt hoặc đã loại hết ứng viên).")
+        return {}
+    marks = {}
+    round_no = len(st.session_state.get("feedback_history", []))
     for col, r in zip(st.columns(len(res["results"])), res["results"]):
         caption = f"#{r['rank']} · sim={r['similarity']:.3f} · {r['filename']} · {r['genus'] or 'chưa rõ chi'}"
         if Path(str(r["path"])).exists():
             col.image(str(r["path"]), caption=caption, width="stretch")
         else:
             col.warning(f"Không tìm thấy tệp ảnh: {r['path']}")
+        marks[r["image_id"]] = col.radio("Phản hồi", FEEDBACK_CHOICES, horizontal=True, label_visibility="collapsed",
+                                         key=f"fb_{round_no}_{r['image_id']}")
     st.dataframe(results_table(res), hide_index=True)
+    return marks
+
+
+def render_feedback(searcher, res: dict, marks: dict[int, str]) -> None:
+    """Truy vấn lại theo công thức Rocchio với các ảnh người dùng vừa đánh dấu."""
+    rel = [i for i, m in marks.items() if m == FEEDBACK_CHOICES[1]]
+    non = [i for i, m in marks.items() if m == FEEDBACK_CHOICES[2]]
+    st.caption("Phản hồi liên quan: đánh dấu ✓ (liên quan) / ✗ (không liên quan) dưới các ảnh rồi truy vấn lại – "
+               "vector truy vấn dịch về phía ảnh ✓ và ra xa ảnh ✗: q' = q + 0,75·tb(✓) − 0,25·tb(✗).")
+    if st.button("Truy vấn lại với phản hồi", disabled=not (rel or non)):
+        opts = st.session_state.get("last_options") or {}
+        new = searcher.refine(res, rel, non, top_k=opts.get("top_k", 5), backend=opts.get("backend", "linear"),
+                              exclude_ids=st.session_state.get("last_exclude"), filters=opts.get("filters"))
+        st.session_state.setdefault("feedback_history", []).append({"relevant": rel, "nonrelevant": non})
+        st.session_state["last_result"] = new
+        st.rerun()
+    if hist := st.session_state.get("feedback_history"):
+        st.caption(f"Đã thực hiện {len(hist)} vòng phản hồi: "
+                   + "; ".join(f"vòng {i}: {len(h['relevant'])} ✓, {len(h['nonrelevant'])} ✗"
+                               for i, h in enumerate(hist, start=1)))
 
 
 def render_debug(res: dict) -> None:
@@ -174,7 +209,7 @@ def render_debug(res: dict) -> None:
             # các khối có số chiều khác nhau -> dùng Series để pandas tự căn hàng (NaN ở ô thiếu)
             st.dataframe(pd.DataFrame({n: pd.Series([round(float(x), 4) for x in v])
                                        for n, v in feature["blocks"].items()}))
-    if res["backend"] in ("kdtree", "kmeans"):
+    if res["backend"] != "linear":
         with st.expander(f"Thông tin chỉ mục ({res['backend']})"):
             st.json(res["index_info"])
 
@@ -183,7 +218,7 @@ def run_query(searcher, options: dict, path: str, exclude_id: int | None) -> dic
     """Chạy một truy vấn; trả về kết quả hoặc None nếu lỗi."""
     try:
         return searcher.query(path, top_k=options["top_k"], backend=options["backend"], weights=options["weights"],
-                              exclude_ids={exclude_id} if exclude_id else None)
+                              exclude_ids={exclude_id} if exclude_id else None, filters=options["filters"] or None)
     except LOAD_ERRORS + (ValueError,) as exc:
         st.error(f"Không truy vấn được ảnh này: {type(exc).__name__}: {exc}")
         return None
@@ -192,31 +227,35 @@ def run_query(searcher, options: dict, path: str, exclude_id: int | None) -> dic
 def main() -> None:
     st.set_page_config(page_title="Demo hệ thống tìm kiếm ảnh cây", layout="wide")
     st.title("Demo hệ thống: tìm kiếm ảnh cây theo nội dung")
-    st.caption("Ảnh truy vấn được chuẩn hoá, phân đoạn vật thể, trích rút đặc trưng rồi so khớp có trọng số.")
+    st.caption("Ảnh truy vấn được chuẩn hoá, phân đoạn vật thể, trích rút đặc trưng rồi so khớp có trọng số; "
+               "có thể lọc theo siêu dữ liệu và truy vấn lại với phản hồi liên quan.")
     try:
         searcher, conn = load_backend()
     except LOAD_ERRORS as exc:
         stop_with_load_error(exc)
-    options = render_sidebar(conn)
+    options = render_sidebar(conn, searcher)
     st.subheader("1. Ảnh truy vấn")
     query_path, exclude_id = pick_query_source()
     if st.button("Tìm kiếm", type="primary", disabled=query_path is None):
         if (result := run_query(searcher, options, query_path, exclude_id)) is not None:
-            st.session_state.update(last_result=result, last_options=options)
+            st.session_state.update(last_result=result, last_options=options, feedback_history=[],
+                                    last_exclude={exclude_id} if exclude_id else None)
     auto = st.query_params.get("auto")  # ?auto=query_01.jpg -> tự chạy một ảnh trong data/queries (phục vụ demo)
     if auto and "last_result" not in st.session_state:
         auto_path = Path(_mod("config").QUERY_DIR) / str(auto)
         if auto_path.exists() and (result := run_query(searcher, options, str(auto_path), None)) is not None:
-            st.session_state.update(last_result=result, last_options=options)
+            st.session_state.update(last_result=result, last_options=options, feedback_history=[], last_exclude=None)
     res = st.session_state.get("last_result")
     if res is None:
         st.caption("Chọn ảnh truy vấn rồi bấm “Tìm kiếm”.")
         return
-    if any((st.session_state.get("last_options") or {}).get(k) != options[k] for k in ("backend", "top_k", "weights")):
+    if any((st.session_state.get("last_options") or {}).get(k) != options[k] for k in ("backend", "top_k", "weights", "filters")):
         st.info("Tham số vừa thay đổi – bấm “Tìm kiếm” để chạy lại (kết quả dưới đây của lần trước).")
     st.subheader("2. Kết quả truy vấn")
     render_query(res)
-    render_results(res)
+    if res.get("filters"):
+        st.caption("Đang lọc: " + "; ".join(f"{FILTER_LABELS[k]} ∈ {{{', '.join(v)}}}" for k, v in res["filters"].items()))
+    render_feedback(searcher, res, render_results(res))
     if options["show_debug"]:
         render_debug(res)
     with st.expander("Bảng chi tiết (text)"):

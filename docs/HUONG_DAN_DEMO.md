@@ -37,7 +37,8 @@ python scripts/build_index.py
 |---|---|
 | Số ảnh trong CSDL | số ảnh hiện có trong bảng `images` |
 | Bộ đặc trưng | tên, số chiều và độ đo khoảng cách của từng bộ (color/L1, shape/L2, texture/L2, deep/cosine) |
-| Phương pháp chọn ứng viên | `linear` (quét toàn bộ, chính xác nhất), `kdtree` (cây k-d trên PCA, nhanh), `kmeans` (chỉ quét các cụm gần nhất) |
+| Phương pháp chọn ứng viên | `linear` (quét toàn bộ, chính xác nhất), `kdtree` (cây k-d trên PCA, nhanh), `rtree` (cây R trên 8 chiều PCA), `quadtree` (cây tứ phân trên 2 chiều PCA), `kmeans` (chỉ quét các cụm gần nhất) |
+| Lọc theo siêu dữ liệu | chọn chi, nhóm hình thái, giấy phép; để trống = không lọc |
 | Số kết quả (top-K) | số ảnh trả về, mặc định 5 |
 | Trọng số color / shape / texture / deep | mức ảnh hưởng của từng bộ đặc trưng; hệ thống tự chuẩn hoá để tổng bằng 1 |
 | Hiển thị giá trị trung gian | bật để xem biểu đồ đặc trưng, bảng khoảng cách từng bộ và thông tin chỉ mục |
@@ -66,13 +67,14 @@ Mười ảnh thử không nằm trong CSDL có sẵn ở `data/queries/` để 
 
 ### Đổi tham số
 
-Sau khi đổi backend, top-K hoặc trọng số, giao diện nhắc "Tham số vừa thay đổi"; bấm **Tìm kiếm** lần nữa để chạy lại.
+Sau khi đổi backend, top-K, trọng số hoặc bộ lọc, giao diện nhắc "Tham số vừa thay đổi"; bấm **Tìm kiếm** lần nữa để chạy lại.
 
 ## 5. Đọc kết quả
 
 - **Ảnh truy vấn (đã chuẩn hoá)** và **Vùng cây (mask)**: vùng đỏ là phần được coi là cây; tỉ lệ vùng cây hiển thị bên dưới.
   Nếu vùng đỏ lệch nhiều (bao cả cỏ, bỏ sót tán) thì kết quả các bộ hình dạng/kết cấu sẽ kém tin cậy.
 - **Dòng Backend**: backend đang dùng, số ứng viên đã xét trên tổng số ảnh, trọng số đã chuẩn hoá.
+- **Phản hồi liên quan**: dưới mỗi ảnh kết quả chọn ✓ (liên quan) hoặc ✗ (không liên quan), rồi bấm **Truy vấn lại với phản hồi**; vector truy vấn được dịch về phía ảnh ✓ (công thức Rocchio). Có thể lặp nhiều vòng.
 - **Bảng thời gian (ms)**: từng bước load_normalize, segment, extract_*, candidates, distance_rank, total.
 - **Hàng ảnh kết quả**: `#hạng · sim=độ tương đồng · tên file · chi`. Độ tương đồng `sim = 1/(1+D)` nằm trong (0, 1], càng gần 1 càng giống.
 - **Bảng số liệu**: với mỗi ảnh kết quả
@@ -92,6 +94,7 @@ Khi bật, phía dưới bảng kết quả có thêm:
 - Hình **Kết quả top-K** với cột chồng thể hiện đóng góp của từng bộ đặc trưng vào khoảng cách.
 - Một mục mở rộng cho mỗi bộ đặc trưng chứa toàn bộ giá trị các khối (làm tròn 4 chữ số).
 - Với backend `kdtree`: số chiều PCA, danh sách ứng viên và khoảng cách trong cây.
+  Với backend `rtree` / `quadtree`: thêm số nút đã duyệt khi tìm láng giềng.
   Với backend `kmeans`: khoảng cách đến từng tâm cụm, các cụm đã quét và danh sách ứng viên.
 
 ## 7. Tham số trên URL (tiện cho demo)
@@ -99,7 +102,7 @@ Khi bật, phía dưới bảng kết quả có thêm:
 | Tham số | Tác dụng | Ví dụ |
 |---|---|---|
 | `auto=<tên file trong data/queries>` | tự chạy truy vấn với ảnh đó ngay khi mở trang | `http://localhost:8501/?auto=query_01.jpg` |
-| `backend=linear\|kdtree\|kmeans` | đặt backend mặc định | `?auto=query_03.jpg&backend=kmeans` |
+| `backend=linear\|kdtree\|rtree\|quadtree\|kmeans` | đặt backend mặc định | `?auto=query_03.jpg&backend=kmeans` |
 | `debug=1` | bật sẵn "Hiển thị giá trị trung gian" | `?auto=query_03.jpg&backend=kmeans&debug=1` |
 
 ## 8. Dùng bằng dòng lệnh (không cần web)

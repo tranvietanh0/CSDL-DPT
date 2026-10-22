@@ -118,7 +118,8 @@ def toc(r: Report):
         "5. Hệ thống tìm kiếm ảnh tương đồng (Nội dung 4)",
         "    5.1. Sơ đồ khối, chức năng và dữ liệu vào/ra của từng khối; quy trình thực hiện",
         "    5.2. Minh hoạ kết quả trung gian của quá trình truy vấn",
-        "    5.3. Đánh giá kết quả",
+        "    5.3. Lọc theo siêu dữ liệu và phản hồi liên quan",
+        "    5.4. Đánh giá kết quả",
         "6. Demo hệ thống (Nội dung 5)",
         "7. Kết luận và hướng phát triển",
         "Phụ lục A. Cấu trúc mã nguồn và hướng dẫn chạy",
@@ -318,11 +319,12 @@ def sec_features(r: Report, ctx: dict, seg_ref: str = "mục 4.2", with_analysis
     ], widths=[3.0, 1.6, 2.2, 3.4, 3.0, 3.0], caption="Tổng quan các bộ đặc trưng", size=9.5)
     r.figure(FIG / "05_feature_sets.png", "Cấu trúc các khối trong từng bộ đặc trưng lưu trong CSDL", 15)
 
-    r.h(2, "3.2. Bộ đặc trưng 1 – Màu sắc (369 chiều, độ đo L1)")
+    r.h(2, f"3.2. Bộ đặc trưng 1 – Màu sắc ({fs['color']['dim']} chiều, độ đo L1)")
     r.p("Không gian màu HSV được chọn thay cho RGB vì H (sắc độ) tách biệt “màu gì” khỏi độ sáng, ít phụ thuộc "
         "thiết bị và điều kiện chiếu sáng. Mỗi kênh được lượng tử hoá thành m mức, tổng số ô màu n = 8×3×3 = 72 "
         "(H chia mịn hơn vì mang nhiều thông tin nhất). Biểu đồ tần suất H(M) = [h1, …, hn] với hj là số điểm ảnh "
-        "thuộc ô màu j, được chuẩn hoá L1 (Σhj = 1) để không phụ thuộc số điểm ảnh. Bộ màu gồm 5 khối:")
+        "thuộc ô màu j, được chuẩn hoá L1 (Σhj = 1) để không phụ thuộc số điểm ảnh. Bộ màu gồm 7 khối, trong đó "
+        "hsv_cum và pwh là hai kỹ thuật nâng cao khắc phục việc hai màu gần nhau rơi vào hai ô khác nhau:")
     r.table(["Khối", "Chiều", "Cách tính", "Giá trị thông tin"], [
         ["hsv_global", "72", "Biểu đồ HSV 8×3×3 trên toàn ảnh", "Ấn tượng màu tổng thể (cây + nền), tìm ảnh cùng "
                                                                 "“tông” màu; nhạy với nền nên dễ bị “che mặt”"],
@@ -333,6 +335,14 @@ def sec_features(r: Report, ctx: dict, seg_ref: str = "mục 4.2", with_analysis
                                                                 "khắc phục hiệu ứng che mặt của nền"],
         ["hsv_bg", "72", "Biểu đồ HSV trên phần nền (ngoài mặt nạ)", "Bối cảnh (trời xanh, tuyết, cỏ, cát); hữu ích "
                                                                     "khi muốn tìm ảnh cùng cảnh"],
+        ["hsv_cum", "72", "Biểu đồ tần suất luỹ tích của vùng cây: ch_i = Σ_{j≤i} h_j (chia cho 72 để cùng thang "
+                          "với các khối khác)",
+         "Hai màu lân cận không còn bị coi là khác hẳn: lệch một ô chỉ làm thay đổi ít giá trị luỹ tích; nhược "
+         "điểm là phụ thuộc thứ tự sắp xếp các ô màu"],
+        ["pwh", "72", "Biểu đồ theo trọng số (PWH): 72 màu đại diện = tâm các ô HSV; mỗi điểm ảnh cây góp trọng số "
+                      "tỉ lệ nghịch với khoảng cách CIE Lab tới 4 màu đại diện gần nhất",
+         "Mô phỏng cảm nhận màu của mắt người, bền với nhiễu và dao động độ sáng; có tỉ số Fisher cao nhất trong "
+         "các biểu đồ màu (mục 3.6)"],
         ["moments", "9", "Trung bình, độ lệch chuẩn, độ lệch (skewness) của H, S, V trên vùng cây",
          "Mô tả gọn phân bố màu; bền với nhiễu lượng tử hoá (hai màu gần nhau rơi vào hai ô khác nhau)"],
     ], widths=[2.3, 1.3, 5.2, 7.2], caption="Các khối của bộ đặc trưng màu sắc", size=9.5)
@@ -455,7 +465,7 @@ def sec_extraction_db(r: Report, ctx: dict):
         "đồng hiển thị cho người dùng là sim = 1/(1 + D) ∈ (0, 1]. Trọng số mặc định: "
         + ", ".join(f"{k} = {v}" for k, v in config.DEFAULT_WEIGHTS.items()) + " (có thể đổi khi truy vấn).")
     r.h(2, "4.5. Cấu trúc chỉ mục đa chiều")
-    r.p("Để tránh quét tuyến tính toàn bộ CSDL khi kích thước tăng, hệ thống xây dựng hai cấu trúc chỉ mục trên "
+    r.p("Để tránh quét tuyến tính toàn bộ CSDL khi kích thước tăng, hệ thống xây dựng bốn cấu trúc chỉ mục trên "
         "không gian nhúng chung E (nối các vector đã chuẩn hoá của mọi bộ, nhân √w_s/scale_s để khoảng cách Euclid "
         "trong E xấp xỉ D):")
     r.bullets([
@@ -464,6 +474,18 @@ def sec_extraction_db(r: Report, ctx: dict):
                                            "phương sai) rồi dựng cây k-d (SciPy cKDTree). Khi truy vấn, lấy "
                                            f"{config.CANDIDATE_POOL} láng giềng gần nhất trong cây làm tập ứng viên, "
                                            "sau đó xếp hạng lại bằng khoảng cách chính xác D (lọc – tinh chỉnh)."),
+        ("Cây R (R-tree): ", f"dựng trên {im['rtree']['pca_dim']} thành phần chính đầu tiên (giữ "
+                             f"{pct(im['rtree']['explained_variance'])} phương sai) bằng phương pháp nạp lô Sort-Tile-"
+                             "Recursive: sắp xếp điểm theo từng trục, cắt thành các lát rồi gom thành nút; mỗi nút lưu "
+                             "hình chữ nhật bao nhỏ nhất (MBR) của các con, mỗi lá ≤ 16 điểm "
+                             f"({im['rtree']['n_leaves']} lá, cao {im['rtree']['height']} tầng). Tìm k láng giềng theo "
+                             "kiểu “tốt nhất trước”: hàng đợi ưu tiên theo khoảng cách nhỏ nhất từ điểm truy vấn tới MBR, "
+                             "chỉ mở nút có thể chứa điểm gần hơn điểm thứ k hiện có (cài đặt NumPy, src/treedb/spatial.py)."),
+        ("Cây tứ phân vùng điểm (PR quadtree): ", "dựng trên 2 thành phần chính đầu tiên (giữ "
+                                                  f"{pct(im['quadtree']['explained_variance'])} phương sai): ô vuông "
+                                                  "chứa quá 8 điểm được chia đều thành 4 ô con NW, NE, SW, SE "
+                                                  f"({im['quadtree']['n_leaves']} lá, sâu {im['quadtree']['depth']} mức); "
+                                                  "tìm láng giềng cũng theo kiểu tốt nhất trước trên các ô vuông."),
         (f"Phân cụm K-means (K = {im['kmeans']['k']}): ", "cài đặt thuật toán Lloyd với khởi tạo k-means++ bằng "
                                                          "NumPy; kích thước các cụm: "
                                                          f"{im['kmeans']['sizes']}. Khi truy vấn, tính khoảng cách từ "
@@ -489,8 +511,8 @@ def sec_search(r: Report, ctx: dict):
                           "sách kiểm duyệt, tách ảnh truy vấn thử", "Ảnh thô", "Ảnh 512×512 + manifest.csv, queries.csv"],
         ["3. Phân đoạn", "SegFormer (lớp tree) + lọc hình thái; dự phòng GrabCut", "Ảnh RGB 512×512", "Mặt nạ nhị phân vùng cây, tỉ lệ "
                                                                                     "vùng cây, độ lệch tâm"],
-        ["4. Trích rút đặc trưng", "Tính 4 bộ đặc trưng", "Ảnh + mặt nạ", "4 vector: màu (369), hình dạng (113), kết "
-                                                                         "cấu (85), embedding (1280) + bố cục khối"],
+        ["4. Trích rút đặc trưng", "Tính 4 bộ đặc trưng", "Ảnh + mặt nạ",
+         "4 vector: " + ", ".join(f"{f['set_name']} ({f['dim']})" for f in ctx["feature_sets"]) + " + bố cục khối"],
         ["5. CSDL SQLite", "Lưu siêu dữ liệu và vector; CRUD; thống kê", "Bản ghi ảnh + vector", "Bảng images, "
                                                                                                "feature_sets, features"],
         ["6. Chuẩn hoá & chỉ mục", "mean/std/scale từng bộ; PCA + cây k-d; K-means", "Ma trận đặc trưng",
@@ -498,7 +520,8 @@ def sec_search(r: Report, ctx: dict):
         ["Q1. Tiền xử lý + phân đoạn truy vấn", "Như khối 2–3 cho ảnh mới (mọi kích thước)", "Ảnh truy vấn",
          "Ảnh 512×512 + mặt nạ"],
         ["Q2. Trích rút đặc trưng truy vấn", "Như khối 4", "Ảnh + mặt nạ", "Vector q của từng bộ"],
-        ["Q3. Chọn ứng viên", "linear: toàn bộ; kdtree: 60 láng giềng PCA; kmeans: ≥ 2 cụm gần nhất",
+        ["Q3. Chọn ứng viên", "linear: toàn bộ; kdtree / rtree / quadtree: 60 láng giềng trên PCA; kmeans: ≥ 2 cụm "
+                              "gần nhất; áp bộ lọc siêu dữ liệu nếu có",
          "q, chỉ mục", "Tập ứng viên (chỉ số ảnh)"],
         ["Q4. Tính khoảng cách", "d_s theo độ đo từng bộ; chuẩn hoá d_s/scale_s; D = Σ w_s·d̃_s",
          "q, vector ứng viên, thống kê, trọng số", "d_s, d̃_s, đóng góp w_s·d̃_s, D cho mỗi ứng viên"],
@@ -586,7 +609,8 @@ def sec_search(r: Report, ctx: dict):
                  17)
 
     # ---- 5.3 danh gia ------------------------------------------------------------------
-    r.h(2, "5.3. Đánh giá kết quả")
+    sec_filter_feedback(r, ctx)
+    r.h(2, "5.4. Đánh giá kết quả")
     r.h(3, "Phương pháp")
     r.p(f"Vì bộ dữ liệu có nhãn chi (genus) suy ra từ category nguồn, hệ thống đánh giá theo cách leave-one-out: "
         f"lần lượt lấy từng ảnh có nhãn thuộc các chi có ≥ 5 ảnh làm truy vấn ({ev['n_queries']} truy vấn, các chi: "
@@ -612,6 +636,7 @@ def sec_search(r: Report, ctx: dict):
             f"{be['linear']['n_queries']} truy vấn)", size=9.5, align_center_cols={1, 2, 3, 4})
     r.figure(FIG / "07_evaluation.png", "Độ chính xác theo bộ đặc trưng (trái) và so sánh backend (phải)", 17)
     best = max(fs.items(), key=lambda kv: kv[1]["p_at_k"])
+    im_rt = ctx["index_meta"].get("rtree", {}).get("pca_dim", "—")
     hc = fs.get("handcrafted(color+shape+texture)", {})
     comb = fs.get("combined(default)", {})
     r.h(3, "Nhận xét")
@@ -627,6 +652,11 @@ def sec_search(r: Report, ctx: dict):
         f"{f3(comb.get('p_at_1', 0))}, mAP@{k} = {f3(comb.get('ap_at_k', 0))}; theo nhóm lá rộng/lá kim đạt "
         f"{f3(comb.get('group_p_at_k', 0))} so với ngẫu nhiên {f3(ev['random_baseline']['group_p_at_k'])}. Cấu hình "
         f"tốt nhất trong thử nghiệm là “{best[0]}” với P@{k} = {f3(best[1]['p_at_k'])}.",
+        f"Cây R giữ {pct(be.get('rtree', {}).get('recall_vs_linear', 0))} và cây tứ phân giữ "
+        f"{pct(be.get('quadtree', {}).get('recall_vs_linear', 0))} kết quả top-{k} của quét tuyến tính: cả hai tìm "
+        "đúng láng giềng gần nhất trong không gian của chúng, nhưng không gian đó chỉ có "
+        f"{im_rt} và 2 chiều PCA nên bỏ sót nhiều thông tin; đây là lý do cây R/tứ phân hợp với dữ liệu ít chiều "
+        "(toạ độ, vùng ảnh) hơn là vector đặc trưng hàng trăm chiều.",
         f"Cây k-d trên PCA giữ được {pct(be.get('kdtree', {}).get('recall_vs_linear', 0))} kết quả top-{k} của quét "
         f"tuyến tính với thời gian xếp hạng giảm khoảng "
         f"{be['linear']['ms_per_query'] / max(be.get('kdtree', {}).get('ms_per_query', 1), 1e-6):.0f} lần; "
@@ -637,9 +667,29 @@ def sec_search(r: Report, ctx: dict):
         "trong đó phân đoạn SegFormer và trích rút đặc trưng chiếm phần lớn.",
         "Hạn chế: nhãn chi tự động từ category có thể sai/thiếu; phân đoạn đôi khi gộp hàng cây hậu cảnh dính liền tán vào vùng cây; các "
         "đặc trưng thủ công nhạy với ánh sáng và mùa; embedding ImageNet không được huấn luyện riêng cho cây. "
-        "Hướng cải thiện: tinh chỉnh mạng trên dữ liệu cây, học trọng số kết hợp từ phản hồi người dùng "
-        "(relevance feedback), phân đoạn từng cây (instance segmentation) để tách cây chính khỏi hàng cây phía sau.",
+        "Hướng cải thiện: tinh chỉnh mạng trên dữ liệu cây, học trọng số kết hợp từ lịch sử phản hồi của người "
+        "dùng, phân đoạn từng cây (instance segmentation) để tách cây chính khỏi hàng cây phía sau.",
     ])
+
+
+def sec_filter_feedback(r: Report, ctx: dict):
+    ev = ctx["eval"]
+    fb = ev.get("feedback", {})
+    k = ev["k"]
+    r.h(2, "5.3. Lọc theo siêu dữ liệu và phản hồi liên quan")
+    r.p("Lọc theo siêu dữ liệu (kết hợp truy vấn quan hệ với truy vấn theo nội dung): người dùng có thể giới hạn "
+        "kết quả theo chi, nhóm hình thái hoặc giấy phép – các thuộc tính lưu trong bảng images. Với quét tuyến "
+        "tính, bộ lọc được áp lên toàn bộ CSDL trước khi tính khoảng cách; với các chỉ mục, tập ứng viên được nới "
+        f"rộng gấp đôi cho tới khi có đủ {k} ảnh thoả điều kiện.")
+    r.p("Phản hồi liên quan: sau lượt truy vấn đầu, người dùng đánh dấu một số ảnh kết quả là liên quan (R) hoặc "
+        "không liên quan (N); vector truy vấn của từng bộ đặc trưng được dịch chuyển theo công thức Rocchio "
+        "q' = α·q + β·tb(R) − γ·tb(N) với α = 1, β = 0,75, γ = 0,25 rồi truy vấn lại. Các khối biểu đồ màu được cắt "
+        "giá trị âm về 0 và chuẩn hoá lại để vẫn là phân bố hợp lệ (src/treedb/feedback.py).")
+    if fb:
+        r.p(f"Mô phỏng trên {fb['n_queries']} truy vấn có nhãn (ảnh cùng chi trong top-{k} được coi là liên quan, "
+            f"khác chi là không liên quan, một vòng phản hồi): P@{k} tăng từ {f3(fb['p_at_k_before'])} lên "
+            f"{f3(fb['p_at_k_after'])}. Lưu ý các ảnh đã được đánh dấu liên quan có thể xuất hiện lại trong kết quả "
+            "mới, nên con số này phản ánh cả việc giữ lại ảnh đúng lẫn tìm thêm ảnh đúng.")
 
 
 def sec_demo(r: Report, ctx: dict):
@@ -648,7 +698,8 @@ def sec_demo(r: Report, ctx: dict):
     r.h(2, "6.1. Giao diện web")
     r.code("streamlit run app/streamlit_app.py")
     r.p("Thanh bên hiển thị thống kê CSDL (số ảnh, các bộ đặc trưng), cho phép chọn backend (linear / kdtree / "
-        "kmeans), số kết quả K và trọng số từng bộ đặc trưng. Người dùng tải lên một ảnh cây bất kỳ (JPG/PNG) hoặc "
+        "rtree / quadtree / kmeans), số kết quả K, trọng số từng bộ đặc trưng và bộ lọc siêu dữ liệu (chi, nhóm, "
+        "giấy phép). Dưới mỗi ảnh kết quả có ô đánh dấu ✓/✗ để truy vấn lại với phản hồi liên quan. Người dùng tải lên một ảnh cây bất kỳ (JPG/PNG) hoặc "
         "chọn một ảnh có sẵn; hệ thống hiển thị ảnh đã chuẩn hoá cùng mặt nạ vùng cây, bảng thời gian xử lý, 5 ảnh "
         "giống nhất kèm độ tương đồng, bảng khoảng cách chuẩn hoá và đóng góp của từng bộ, biểu đồ các giá trị đặc "
         "trưng trung gian (biểu đồ HSV, lưới hình dạng, profile, LBP, GLCM, DCT) và, với backend chỉ mục, thông "
@@ -675,8 +726,8 @@ def sec_conclusion(r: Report, ctx: dict):
         f"đủ giá trị trung gian, đạt P@5 = {f3(comb.get('p_at_k', 0))} theo chi (gấp "
         f"{comb.get('p_at_k', 0) / max(ev['random_baseline']['p_at_k'], 1e-9):.1f} lần ngẫu nhiên); (5) demo bằng "
         f"giao diện web và dòng lệnh.")
-    r.p("Hướng phát triển: mở rộng bộ dữ liệu với nhãn loài do chuyên gia gán; áp dụng phản hồi liên quan để cập "
-        "nhật trọng số và vector truy vấn (công thức Rocchio); phân đoạn theo từng thể hiện cây (instance segmentation); "
+    r.p("Hướng phát triển: mở rộng bộ dữ liệu với nhãn loài do chuyên gia gán; học trọng số kết hợp các bộ đặc "
+        "trưng từ phản hồi của người dùng; phân đoạn theo từng thể hiện cây (instance segmentation); "
         "tinh chỉnh mạng nơ-ron trên ảnh cây; triển khai CSDL vector (FAISS/pgvector) khi số ảnh lên hàng triệu.")
 
 

@@ -1,9 +1,10 @@
-"""Khong gian dac trung, do do khoang cach va cac cau truc chi muc (kd-tree, K-means).
+"""Khong gian dac trung, do do khoang cach va cac cau truc chi muc (kd-tree, cay R, cay tu phan, K-means).
 
 - Do do khoang cach theo tung bo dac trung (slide bai 8, tr.18): L1, L2, cosine.
 - Chuan hoa: bo dung L2 duoc z-score theo tung chieu; moi bo co "scale" = khoang cach trung binh
   giua 2 anh ngau nhien trong CSDL, de d/scale ~ 1 -> cac bo dac trung co the cong voi nhau theo trong so.
-- Chi muc: cay k-d tren khong gian PCA (slide bai 7) va phan cum K-means (slide bai 8, tr.26-28)
+- Chi muc: cay k-d, cay R (8 thanh phan chinh dau), cay tu phan PR (2 thanh phan dau) tren khong gian PCA
+  (slide bai 7) va phan cum K-means (slide bai 8, tr.26-28)
   dung de cat tia ung vien (filter) truoc khi xep hang chinh xac (refine).
 """
 from __future__ import annotations
@@ -15,10 +16,13 @@ import numpy as np
 from scipy.spatial import cKDTree
 
 from . import config, db
+from .spatial import QuadTree, RTree
 
 EPS = 1e-8
 INDEX_KDTREE = "kdtree_pca"
 INDEX_KMEANS = "kmeans"
+INDEX_RTREE = "rtree_pca"
+INDEX_QUADTREE = "quadtree_pca"
 
 
 def distance(metric: str, q: np.ndarray, X: np.ndarray) -> np.ndarray:
@@ -199,6 +203,15 @@ def build_indexes(conn, space: FeatureSpace, k: int = config.KMEANS_K,
                "n": int(len(Z)), "sets": space.sets, "weights": space.weights,
                "built_at": datetime.now().isoformat(timespec="seconds")}
     db.put_index(conn, INDEX_KDTREE, "kdtree", pickle.dumps({"pca": pca, "Z": Z, "ids": space.ids}), meta_kd)
+    metas = {"kdtree": meta_kd}
+    for name, kind, dim in ((INDEX_RTREE, "rtree", config.RTREE_PCA_DIM), (INDEX_QUADTREE, "quadtree", 2)):
+        dim = min(dim, n_comp)
+        tree = (RTree if kind == "rtree" else QuadTree)(Z[:, :dim])
+        metas[kind] = {"pca_dim": dim, "explained_variance": float(pca.explained_variance_ratio_[:dim].sum()),
+                       "n_leaves": tree.n_leaves,
+                       ("height" if kind == "rtree" else "depth"): tree.height if kind == "rtree" else tree.depth,
+                       "built_at": meta_kd["built_at"]}
+        db.put_index(conn, name, kind, pickle.dumps({"pca": pca, "Z": Z[:, :dim], "ids": space.ids}), metas[kind])
 
     centers, labels, inertia = kmeans(E, min(k, len(E)), seed=seed)
     labels = labels.astype(int)
@@ -210,7 +223,7 @@ def build_indexes(conn, space: FeatureSpace, k: int = config.KMEANS_K,
                  pickle.dumps({"centroids": centers.astype(np.float32), "ids": space.ids, "labels": labels}),
                  meta_km)
     db.set_clusters(conn, INDEX_KMEANS, [(int(i), int(c)) for i, c in zip(space.ids, labels)])
-    return {"kdtree": meta_kd, "kmeans": meta_km}
+    return {**metas, "kmeans": meta_km}
 
 
 class KDTreeIndex:
@@ -230,6 +243,24 @@ class KDTreeIndex:
         d, idx = self.tree.query(z, k=min(n, len(self.Z)))
         idx = np.atleast_1d(idx)
         return {"rows": idx, "ids": self.ids[idx], "tree_dist": np.atleast_1d(d), "z": z}
+
+
+class SpatialIndex:
+    """Cay R / cay tu phan (spatial.py) tren cac thanh phan chinh dau tien cua khong gian nhung."""
+
+    def __init__(self, conn, name: str):
+        loaded = db.get_index(conn, name)
+        if loaded is None:
+            raise RuntimeError(f"Chua co chi muc {name} - hay chay scripts/build_index.py")
+        payload, self.meta = loaded
+        obj = pickle.loads(payload)
+        self.pca, self.Z, self.ids = obj["pca"], obj["Z"], obj["ids"]
+        self.tree = (RTree if name == INDEX_RTREE else QuadTree)(self.Z)
+
+    def candidates(self, space: FeatureSpace, feats: dict, n: int = config.CANDIDATE_POOL) -> dict:
+        z = self.pca.transform(space.embed(feats)[None, :])[0, :self.Z.shape[1]]
+        idx, d, visited = self.tree.knn(z, n)
+        return {"rows": idx, "ids": self.ids[idx], "tree_dist": d, "nodes_visited": visited, "z": z}
 
 
 class KMeansIndex:

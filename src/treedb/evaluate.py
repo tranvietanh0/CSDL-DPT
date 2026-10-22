@@ -5,7 +5,8 @@ Do do:
   P@1   : anh dau tien co cung chi hay khong
   AP@K  : average precision trong top-K (mAP = trung binh tren cac truy van)
   P@K (nhom): ti le anh trong top-K cung nhom hinh thai (la rong / la kim)
-So sanh: tung bo dac trung rieng le, ket hop; backend linear / kd-tree / k-means (recall so voi linear, thoi gian).
+So sanh: tung bo dac trung rieng le, ket hop; backend linear / kd-tree / cay R / cay tu phan / k-means (recall so voi
+linear, thoi gian); phan hoi lien quan mo phong (1 vong Rocchio, anh cung chi trong top-K = lien quan).
 """
 from __future__ import annotations
 
@@ -63,6 +64,25 @@ def evaluate_config(searcher: Searcher, queries: list[int], genus: dict, group: 
     return out
 
 
+def evaluate_feedback(searcher, queries: list[int], genus: dict, k: int = config.TOP_K) -> dict:
+    """Mo phong nguoi dung: sau truy van dau, danh dau anh cung chi la lien quan, khac chi la khong lien quan,
+    truy van lai 1 lan bang Rocchio. P@K tinh tren ket qua moi (khong tinh anh truy van)."""
+    searcher.space.set_weights(config.DEFAULT_WEIGHTS)
+    before, after = [], []
+    for q in queries:
+        g = genus.get(q)
+        if not g:
+            continue
+        first = searcher.query_by_id(q, top_k=k)
+        rel = [r["image_id"] for r in first["results"] if genus.get(r["image_id"]) == g]
+        non = [r["image_id"] for r in first["results"] if genus.get(r["image_id"]) != g]
+        second = searcher.refine(first, rel, non, top_k=k, exclude_ids={q})
+        before.append(len(rel) / k)
+        after.append(sum(genus.get(r["image_id"]) == g for r in second["results"]) / k)
+    return {"n_queries": len(before), "p_at_k_before": float(np.mean(before)), "p_at_k_after": float(np.mean(after)),
+            "alpha_beta_gamma": [1.0, 0.75, 0.25]}
+
+
 def run(k: int = config.TOP_K, n_backend_queries: int = 150, seed: int = 0) -> dict:
     conn = db.connect()
     searcher = Searcher(conn)
@@ -100,7 +120,7 @@ def run(k: int = config.TOP_K, n_backend_queries: int = 150, seed: int = 0) -> d
     base = evaluate_config(searcher, sub, genus, group, config.DEFAULT_WEIGHTS, "linear", k)
     report["backends"] = {"linear": {kk: v for kk, v in base.items() if kk != "_top"}}
     report["backends"]["linear"]["recall_vs_linear"] = 1.0
-    for be in ("kdtree", "kmeans"):
+    for be in ("kdtree", "rtree", "quadtree", "kmeans"):
         try:
             r = evaluate_config(searcher, sub, genus, group, config.DEFAULT_WEIGHTS, be, k)
         except RuntimeError as e:
@@ -113,6 +133,11 @@ def run(k: int = config.TOP_K, n_backend_queries: int = 150, seed: int = 0) -> d
     for be, r in report["backends"].items():
         print(f"[eval] backend {be:<7} P@{k}={r['p_at_k']:.3f} recall@{k} so voi linear={r['recall_vs_linear']:.3f} "
               f"{r['ms_per_query']:.2f} ms/truy van", flush=True)
+
+    report["feedback"] = evaluate_feedback(searcher, sub, genus, k)
+    fb = report["feedback"]
+    print(f"[eval] phan hoi lien quan: P@{k} {fb['p_at_k_before']:.3f} -> {fb['p_at_k_after']:.3f} "
+          f"({fb['n_queries']} truy van co nhan)", flush=True)
 
     config.RESULTS_DIR.mkdir(exist_ok=True)
     out = config.RESULTS_DIR / "evaluation.json"

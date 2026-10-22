@@ -1,7 +1,7 @@
 {
   "kdtree": {
     "pca_dim": 32,
-    "explained_variance": 0.6085905322615615,
+    "explained_variance": 0.6087305073598388,
     "n": 627,
     "sets": [
       "color",
@@ -15,19 +15,33 @@
       "texture": 0.2,
       "deep": 0.25
     },
-    "built_at": "2026-10-19T02:57:58"
+    "built_at": "2026-10-22T01:47:16"
+  },
+  "rtree": {
+    "pca_dim": 8,
+    "explained_variance": 0.3425357014472301,
+    "n_leaves": 64,
+    "height": 3,
+    "built_at": "2026-10-22T01:47:16"
+  },
+  "quadtree": {
+    "pca_dim": 2,
+    "explained_variance": 0.1300734081869974,
+    "n_leaves": 169,
+    "depth": 5,
+    "built_at": "2026-10-22T01:47:16"
   },
   "kmeans": {
     "k": 8,
-    "inertia": 596.9114822961635,
+    "inertia": 595.9044620194403,
     "sizes": [
-      44,
-      90,
-      110,
-      110,
-      67,
+      55,
+      89,
+      108,
+      105,
+      63,
       101,
-      54,
+      55,
       51
     ],
     "n": 627,
@@ -43,6 +57,6 @@
       "texture": 0.2,
       "deep": 0.25
     },
-    "built_at": "2026-10-19T02:58:10"
+    "built_at": "2026-10-22T01:47:31"
   }
 }
