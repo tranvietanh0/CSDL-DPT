@@ -3,7 +3,7 @@
 Nguoi dung danh dau mot so anh ket qua la LIEN QUAN / KHONG LIEN QUAN; vector truy van cua tung bo dac
 trung duoc dich chuyen theo cong thuc Rocchio:
 
-    q' = alpha * q + beta * trung_binh(anh lien quan) - gamma * trung_binh(anh khong lien quan)
+    q' = (alpha * q + beta * trung_binh(anh lien quan) - gamma * trung_binh(anh khong lien quan)) / (alpha + beta - gamma)
 
 roi truy van lai. Bieu do tan suat (bo do bang L1) duoc cat am ve 0 va chuan hoa lai tung khoi de van la
 phan bo hop le.

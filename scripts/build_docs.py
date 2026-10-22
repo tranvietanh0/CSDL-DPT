@@ -683,7 +683,8 @@ def sec_filter_feedback(r: Report, ctx: dict):
         f"rộng gấp đôi cho tới khi có đủ {k} ảnh thoả điều kiện.")
     r.p("Phản hồi liên quan: sau lượt truy vấn đầu, người dùng đánh dấu một số ảnh kết quả là liên quan (R) hoặc "
         "không liên quan (N); vector truy vấn của từng bộ đặc trưng được dịch chuyển theo công thức Rocchio "
-        "q' = α·q + β·tb(R) − γ·tb(N) với α = 1, β = 0,75, γ = 0,25 rồi truy vấn lại. Các khối biểu đồ màu được cắt "
+        "q' = (α·q + β·tb(R) − γ·tb(N)) / (α + β − γ) với α = 1, β = 0,75, γ = 0,25 rồi truy vấn lại; phép chia cho "
+        "tổng hệ số giữ q' cùng thang đo với các vector trong CSDL. Các khối biểu đồ màu được cắt "
         "giá trị âm về 0 và chuẩn hoá lại để vẫn là phân bố hợp lệ (src/treedb/feedback.py).")
     if fb:
         r.p(f"Mô phỏng trên {fb['n_queries']} truy vấn có nhãn (ảnh cùng chi trong top-{k} được coi là liên quan, "
@@ -699,7 +700,7 @@ def sec_demo(r: Report, ctx: dict):
     r.code("streamlit run app/streamlit_app.py")
     r.p("Thanh bên hiển thị thống kê CSDL (số ảnh, các bộ đặc trưng), cho phép chọn backend (linear / kdtree / "
         "rtree / quadtree / kmeans), số kết quả K, trọng số từng bộ đặc trưng và bộ lọc siêu dữ liệu (chi, nhóm, "
-        "giấy phép). Dưới mỗi ảnh kết quả có ô đánh dấu ✓/✗ để truy vấn lại với phản hồi liên quan. Người dùng tải lên một ảnh cây bất kỳ (JPG/PNG) hoặc "
+        "giấy phép). Dưới mỗi ảnh kết quả có ô đánh giá R (liên quan) / N (không liên quan) để truy vấn lại với phản hồi liên quan. Người dùng tải lên một ảnh cây bất kỳ (JPG/PNG) hoặc "
         "chọn một ảnh có sẵn; hệ thống hiển thị ảnh đã chuẩn hoá cùng mặt nạ vùng cây, bảng thời gian xử lý, 5 ảnh "
         "giống nhất kèm độ tương đồng, bảng khoảng cách chuẩn hoá và đóng góp của từng bộ, biểu đồ các giá trị đặc "
         "trưng trung gian (biểu đồ HSV, lưới hình dạng, profile, LBP, GLCM, DCT) và, với backend chỉ mục, thông "

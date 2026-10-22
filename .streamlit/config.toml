@@ -1,4 +1,4 @@
-# Giao dien demo (streamlit run app/streamlit_app.py) - mau xanh la theo chu de cay
+# Giao dien demo (streamlit run app/streamlit_app.py) - phong cach bai bao / cong cu thuc nghiem
 [server]
 headless = true
 
@@ -10,17 +10,19 @@ toolbarMode = "viewer"
 
 [theme]
 base = "light"
-primaryColor = "#2f6f45"
-backgroundColor = "#f6f7f2"
-secondaryBackgroundColor = "#e7f2e3"
-textColor = "#1d2a22"
-borderColor = "#dfe6dc"
-baseRadius = "0.75rem"
-font = "'Be Vietnam Pro', sans-serif"
+primaryColor = "#1f3a5f"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f3f5f8"
+textColor = "#1b1f24"
+borderColor = "#d5dbe3"
+baseRadius = "0.25rem"
+font = "'Noto Sans', sans-serif"
+headingFont = "'Noto Serif', serif"
+codeFont = "'JetBrains Mono', monospace"
 
 [theme.sidebar]
-backgroundColor = "#1f4d36"
-secondaryBackgroundColor = "#2a5e43"
-textColor = "#eef5ec"
-primaryColor = "#9fd27f"
-borderColor = "#3b6f53"
+backgroundColor = "#f3f5f8"
+secondaryBackgroundColor = "#ffffff"
+textColor = "#1b1f24"
+primaryColor = "#1f3a5f"
+borderColor = "#d5dbe3"
