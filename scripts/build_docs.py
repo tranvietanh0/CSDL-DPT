@@ -50,6 +50,15 @@ def load_context() -> dict:
         if m:
             ctx["filter_line"] = m.group(0)
             ctx["n_accept"], ctx["n_total"], ctx["rejects"] = int(m.group(1)), int(m.group(2)), eval(m.group(3))
+    # cache va log khong dua len kho ma -> dung so lieu da luu trong results/collect_stats.json
+    collect = config.RESULTS_DIR / "collect_stats.json"
+    if collect.exists():
+        cs = json.loads(collect.read_text(encoding="utf-8"))
+        ctx["n_candidates"] = ctx["n_candidates"] or cs["n_candidates"]
+        for k in ("n_accept", "n_total", "rejects"):
+            ctx.setdefault(k, cs[k])
+    quality = config.RESULTS_DIR / "dataset_quality.json"
+    ctx["quality"] = json.loads(quality.read_text(encoding="utf-8")) if quality.exists() else None
     conn = db.connect()
     ctx["db"] = db.summary(conn)
     ctx["feature_sets"] = db.list_feature_sets(conn)

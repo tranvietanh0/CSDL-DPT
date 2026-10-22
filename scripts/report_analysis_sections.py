@@ -81,18 +81,26 @@ def sec_info_value(r: Report, fa: dict, num: str):
         ("Độ chính xác 1-NN: ", f"tỉ lệ ảnh mà ảnh gần nhất (bỏ chính nó) có cùng chi. Mức ngẫu nhiên (hoán vị nhãn) "
                                 f"là {_f(fa['nn1_chance'], 3)}."),
     ])
+    xa = "nn1_acc_xauthor" in fa["sets"][next(iter(fa["sets"]))]
+    if xa:
+        r.bullets([("1-NN khác tác giả: ", "như 1-NN nhưng không cho phép ảnh gần nhất là ảnh của cùng tác giả. Bộ dữ "
+                                           "liệu có nhiều loạt ảnh chụp cùng một cây (mục 1.5.2), nên chỉ số này phản "
+                                           "ánh đúng hơn khả năng nhận ra cây cùng chi nhưng là cây khác.")])
     rows = []
     for b in sorted(fa["blocks"], key=lambda x: -x["nn1_acc"]):
         rows.append([SET_VI[b["set"]], f"{b['block']} ({BLOCK_VI.get(b['block'], '')})", str(b["dim"]),
-                     b["metric"].upper(), _f(b["fisher"]), _f(b["sep_ratio"]), _f(b["nn1_acc"])])
-    r.table(["Bộ", "Khối", "Chiều", "Độ đo", "Fisher", "Tỉ số tách", "1-NN"], rows,
-            widths=[2.6, 5.2, 1.4, 1.6, 1.6, 1.8, 1.6], caption="Giá trị thông tin của từng khối đặc trưng (xếp "
-            "theo độ chính xác 1-NN)", size=9, align_center_cols={2, 3, 4, 5, 6})
+                     b["metric"].upper(), _f(b["fisher"]), _f(b["sep_ratio"]), _f(b["nn1_acc"])]
+                    + ([_f(b["nn1_acc_xauthor"])] if xa else []))
+    r.table(["Bộ", "Khối", "Chiều", "Độ đo", "Fisher", "Tỉ số tách", "1-NN"] + (["1-NN khác TG"] if xa else []), rows,
+            widths=[2.4, 4.6, 1.3, 1.5, 1.5, 1.6, 1.4] + ([1.8] if xa else []),
+            caption="Giá trị thông tin của từng khối đặc trưng (xếp theo độ chính xác 1-NN)", size=9,
+            align_center_cols=set(range(2, 8)))
     sets = fa["sets"]
-    r.table(["Bộ đặc trưng", "Chiều", "Fisher", "Tỉ số tách", "1-NN"],
-            [[SET_VI[s], str(v["dim"]), _f(v["fisher"]), _f(v["sep_ratio"]), _f(v["nn1_acc"])] for s, v in sets.items()],
-            widths=[4.5, 2, 2.5, 2.5, 2.5], caption="Giá trị thông tin của cả bộ đặc trưng", size=9.5,
-            align_center_cols={1, 2, 3, 4})
+    r.table(["Bộ đặc trưng", "Chiều", "Fisher", "Tỉ số tách", "1-NN"] + (["1-NN khác TG"] if xa else []),
+            [[SET_VI[s], str(v["dim"]), _f(v["fisher"]), _f(v["sep_ratio"]), _f(v["nn1_acc"])]
+             + ([_f(v["nn1_acc_xauthor"])] if xa else []) for s, v in sets.items()],
+            widths=[4.0, 1.8, 2.2, 2.2, 2.2] + ([2.6] if xa else []), caption="Giá trị thông tin của cả bộ đặc trưng",
+            size=9.5, align_center_cols=set(range(1, 6)))
     blocks = sorted(fa["blocks"], key=lambda x: -x["nn1_acc"])
     best_fisher = max(fa["blocks"], key=lambda x: x["fisher"])
     weak = [b for b in fa["blocks"] if b["sep_ratio"] < 1.03]
@@ -111,7 +119,21 @@ def sec_info_value(r: Report, fa: dict, num: str):
         "sáng) nên được giữ trong tổ hợp có trọng số."
         + (f" Các khối có tỉ số tách gần 1 ({', '.join(b['block'] for b in weak)}) mang ít thông tin về chi và "
            f"chủ yếu giúp tìm ảnh cùng bối cảnh/bố cục." if weak else ""),
-    ])
+    ] + ([_xauthor_note(fa)] if xa else []))
+
+
+def _xauthor_note(fa: dict) -> str:
+    sets = fa["sets"]
+    best = max(sets, key=lambda s: sets[s]["nn1_acc_xauthor"])
+    blocks = sorted(fa["blocks"], key=lambda b: b["nn1_acc"] - b["nn1_acc_xauthor"])
+    small, big = blocks[:3], blocks[-2:][::-1]
+    top = max(fa["blocks"], key=lambda b: b["nn1_acc_xauthor"])
+    fmt = lambda bs: ", ".join(f"{b['block']} ({_f(b['nn1_acc'])} → {_f(b['nn1_acc_xauthor'])})" for b in bs)  # noqa: E731
+    return (f"Khi loại ảnh cùng tác giả, độ chính xác 1-NN của mọi bộ đều giảm, tức một phần kết quả 1-NN đến từ việc "
+            f"tìm lại chính cây đó trong cùng loạt ảnh. Giảm mạnh nhất là {fmt(big)}: ảnh cùng loạt chụp có cùng ánh "
+            f"sáng, mùa và bối cảnh nên màu và embedding gần nhau; giảm ít nhất là {fmt(small)}. Dù vậy mọi bộ vẫn "
+            f"trên mức ngẫu nhiên ({_f(fa['nn1_chance'])}); bộ cao nhất là {SET_VI[best].lower()} "
+            f"({_f(sets[best]['nn1_acc_xauthor'])}), khối cao nhất là {top['block']} ({_f(top['nn1_acc_xauthor'])}).")
 
 
 def sec_example(r: Report, fa: dict, num: str):

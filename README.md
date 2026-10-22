@@ -31,6 +31,7 @@ python scripts/extract_features.py     # 2-3. phân đoạn, trích rút đặc 
 python scripts/build_index.py          # 3b. chỉ mục kd-tree (PCA) + phân cụm K-means
 python scripts/run_evaluation.py       # 4c. đánh giá leave-one-out (P@5, mAP, so sánh backend)
 python scripts/analyze_features.py      # 2. phân tích giá trị thông tin đặc trưng (Fisher, 1-NN), hình 15-16
+python scripts/analyze_dataset.py       # 1. chất lượng + cân bằng bộ dữ liệu (tán bị cắt, cỡ cây, IR), hình 17-19
 python scripts/make_figures.py         # hình minh hoạ + ví dụ truy vấn
 python scripts/build_docs.py           # sinh báo cáo docx + pdf
 python scripts/build_report1.py         # Báo cáo 1 (nội dung 1, 2) docx + pdf

@@ -4,6 +4,7 @@ Chi dung cac anh co nhan chi (genus) trong CSDL. Moi khoi dac trung duoc danh gi
   - fisher    : trung binh theo chieu cua ti so phuong sai giua cac chi / phuong sai trong cung chi (z-score)
   - sep_ratio : khoang cach trung binh giua 2 anh khac chi / khoang cach trung binh giua 2 anh cung chi
   - nn1_acc   : do chinh xac 1-NN leave-one-out theo chi (anh gan nhat co cung chi voi anh dang xet)
+  - nn1_acc_xauthor : nhu nn1_acc nhung bo cac anh cung tac gia (thuong la cung 1 cay / cung loat chup)
 Khoang cach dung dung do do cua bo dac trung (L1 cho mau, L2 tren z-score cho hinh dang / ket cau, cosine cho deep).
 """
 from __future__ import annotations
@@ -60,7 +61,7 @@ def _zscore(X: np.ndarray) -> np.ndarray:
     return (X - X.mean(0)) / sd
 
 
-def _scores(X: np.ndarray, y: np.ndarray, metric: str) -> dict:
+def _scores(X: np.ndarray, y: np.ndarray, metric: str, author: np.ndarray | None = None) -> dict:
     Z = _zscore(X)
     mu = Z.mean(0)
     between = np.zeros(Z.shape[1])
@@ -77,8 +78,12 @@ def _scores(X: np.ndarray, y: np.ndarray, metric: str) -> dict:
     intra, inter = float(D[same & off].mean()), float(D[~same].mean())
     np.fill_diagonal(D, np.inf)
     nn1 = float((y[D.argmin(1)] == y).mean())
-    return {"dim": int(X.shape[1]), "fisher": fisher, "intra": intra, "inter": inter,
-            "sep_ratio": inter / max(intra, 1e-9), "nn1_acc": nn1}
+    out = {"dim": int(X.shape[1]), "fisher": fisher, "intra": intra, "inter": inter,
+           "sep_ratio": inter / max(intra, 1e-9), "nn1_acc": nn1}
+    if author is not None:
+        D[author[:, None] == author[None, :]] = np.inf
+        out["nn1_acc_xauthor"] = float((y[D.argmin(1)] == y).mean())
+    return out
 
 
 def analyze(conn) -> dict:
@@ -90,6 +95,8 @@ def analyze(conn) -> dict:
     keep_genera = sorted(g for g, c in counts.items() if c >= MIN_GENUS_IMAGES)
     lab = np.isin(genus, keep_genera)
     y = genus[lab]
+    author = np.array([imgs[int(i)].get("author") or "" for i in ref_ids])
+    auth = author[lab]
     rng = np.random.default_rng(0)
     chance = float(np.mean([(rng.permutation(y) == y).mean() for _ in range(200)]))
 
@@ -98,9 +105,9 @@ def analyze(conn) -> dict:
         ids, X = mats[s]
         assert np.array_equal(ids, ref_ids), f"thu tu anh cua bo {s} khong khop"
         XL = X[lab]
-        set_scores[s] = _scores(XL, y, info["metric"])
+        set_scores[s] = _scores(XL, y, info["metric"], auth)
         for name, sl in _block_slices(info["layout"]).items():
-            sc = _scores(XL[:, sl], y, info["metric"])
+            sc = _scores(XL[:, sl], y, info["metric"], auth)
             blocks.append({"set": s, "block": name, "metric": info["metric"], **sc})
 
     # Thong ke mo ta theo chi cho cac dac trung de dien giai
@@ -127,8 +134,7 @@ def analyze(conn) -> dict:
             "nn1_chance": chance, "blocks": blocks, "sets": set_scores,
             "per_genus": per_genus, "groups": groups,
             "key_features": [f[3] for f in KEY_FEATURES],
-            "example": _example_triplet(sets, mats, genus,
-                                        np.array([imgs[int(i)].get("author") or "" for i in ref_ids]))}
+            "example": _example_triplet(sets, mats, genus, author)}
 
 
 def _example_triplet(sets, mats, genus, author) -> dict:

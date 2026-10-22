@@ -51,7 +51,7 @@ def plot_triplet(conn, rep: dict, out: Path) -> Path:
     imgs = db.get_images(conn, ex["image_ids"])
     fig, axes = plt.subplots(1, 3, figsize=(11, 4))
     for ax, iid, gn, tag in zip(axes, ex["image_ids"], ex["genera"], "ABC"):
-        ax.imshow(Image.open(imgs[iid]["path"]))
+        ax.imshow(Image.open(config.IMG_DIR / imgs[iid]["filename"]))   # cot path co the la duong dan may khac
         ax.set_title(f"Ảnh {tag}: {imgs[iid]['filename']} ({gn})", fontsize=10)
         ax.axis("off")
     fig.tight_layout()
@@ -67,7 +67,7 @@ def main():
     print(f"[analysis] {OUT}  ({rep['n_labeled']} anh co nhan, {len(rep['genera'])} chi)")
     for b in sorted(rep["blocks"], key=lambda r: -r["nn1_acc"]):
         print(f"  {b['set']:8s} {b['block']:16s} dim={b['dim']:5d} fisher={b['fisher']:.3f} "
-              f"sep={b['sep_ratio']:.3f} 1nn={b['nn1_acc']:.3f}")
+              f"sep={b['sep_ratio']:.3f} 1nn={b['nn1_acc']:.3f} 1nn_xauthor={b['nn1_acc_xauthor']:.3f}")
     print("[fig]", plot_boxplots(conn, rep, FIG_BOX))
     print("[fig]", plot_triplet(conn, rep, FIG_TRIPLET))
     conn.close()

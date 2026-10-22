@@ -1,0 +1,7 @@
+{
+  "note": "So lieu buoc suu tam (collect.py) trich tu data/_cache/commons_info.json va results/build_dataset.log luc chay build_dataset.py; luu lai vi hai file do khong dua len kho ma.",
+  "n_candidates": 3523,
+  "n_accept": 2521,
+  "n_total": 3523,
+  "rejects": {"aspect": 326, "badcat": 340, "small": 200, "badword": 102, "mime": 26, "palm": 8}
+}
