@@ -45,11 +45,11 @@ CRITERIA = ["Thái độ tham gia", "Mức hoàn thành CV", "Kỹ năng giao ti
 SELF_SCORES = {name: [5] * len(CRITERIA) for name, _ in GROUP["members"]}
 
 
-def sec_assignment(r: Report):
+def sec_assignment(r: Report, tasks: list[tuple[str, str, str]] = TASKS):
     r.p("PHẦN PHÂN CÔNG NHIỆM VỤ VÀ ĐÁNH GIÁ", bold=True, align="center", size=14)
     r.p("PHÂN CÔNG NHIỆM VỤ NHÓM THỰC HIỆN", bold=True, size=13)
     r.table(["TT", "Công việc / Nhiệm vụ", "SV thực hiện", "Thời hạn hoàn thành"],
-            [[str(i), t, who, due] for i, (t, who, due) in enumerate(TASKS, 1)],
+            [[str(i), t, who, due] for i, (t, who, due) in enumerate(tasks, 1)],
             widths=[1.0, 8.4, 3.8, 2.8], size=11, align_center_cols={0, 3})
     r.p("THỰC HIỆN TỰ ĐÁNH GIÁ", bold=True, size=13)
     r.p("Thang điểm 1–5 (5 là tốt nhất).", italic=True, size=11.5)
@@ -210,8 +210,11 @@ def find_pages(pdf: Path, entries: list[tuple[int, str]]) -> dict[str, int]:
     return pages
 
 
-def build_with_toc(ctx: dict) -> tuple[Path, Path | None]:
-    """Muc luc co so trang: luot 1 lay danh sach tieu de, luot 2 dung PDF de dem trang, luot 3 ghi so trang that."""
+def build_with_toc(ctx: dict, build_fn=None) -> tuple[Path, Path | None]:
+    """Muc luc co so trang: luot 1 lay danh sach tieu de, luot 2 dung PDF de dem trang, luot 3 ghi so trang that.
+
+    build_fn(ctx, toc_entries=None, pages=None) -> (docx, headings); mac dinh la Bao cao 1."""
+    build = build_fn or globals()["build"]
     _, headings = build(ctx)
     entries = [(lvl, t) for lvl, t in headings if lvl <= TOC_LEVELS]
     out, _ = build(ctx, entries)

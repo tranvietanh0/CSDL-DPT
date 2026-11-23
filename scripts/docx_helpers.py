@@ -14,6 +14,7 @@ FONT = "Times New Roman"
 BODY_PT = 14
 FIRST_LINE_CM = 1.27  # thut dau dong doan van than bai
 TEXT_WIDTH_CM = 16.0  # A4 21 cm - le trai 3 cm - le phai 2 cm
+KEEP_TOGETHER_ROWS = 8  # bang co toi da chung nay dong du lieu duoc giu tren cung mot trang
 
 
 class Report:
@@ -222,9 +223,14 @@ class Report:
             cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
             r = cap.add_run(f"Bảng {self.tab_no}. {caption}")
             r.bold = r.italic = True
+            cap.paragraph_format.keep_with_next = True  # chu thich khong bi tach khoi bang
         t = self.doc.add_table(rows=1, cols=len(headers))
         t.style = "Table Grid"
         t.alignment = WD_TABLE_ALIGNMENT.CENTER
+        if len(rows) > KEEP_TOGETHER_ROWS:  # bang lon: lap lai dong tieu de khi sang trang (bang nho giu nguyen khoi)
+            trPr = t.rows[0]._tr.get_or_add_trPr()
+            for tag in ("w:tblHeader", "w:cantSplit"):
+                trPr.append(OxmlElement(tag))
         for i, h in enumerate(headers):
             cell = t.rows[0].cells[i]
             cell.text = ""
@@ -232,6 +238,7 @@ class Report:
             run.bold = True
             run.font.size = Pt(size)
             cell.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+            cell.paragraphs[0].paragraph_format.keep_with_next = True  # tieu de di cung dong dau tien
             self._shade(cell.paragraphs[0], "DCE6F1")
             self._cell_shade(cell, "DCE6F1")
         for row in rows:
@@ -242,6 +249,11 @@ class Report:
                 run.font.size = Pt(size)
                 if align_center_cols and i in align_center_cols:
                     cells[i].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        if len(rows) <= KEEP_TOGETHER_ROWS:  # bang nho: khong cat ngang trang
+            for row in t.rows[:-1]:
+                for cell in row.cells:
+                    for para in cell.paragraphs:
+                        para.paragraph_format.keep_with_next = True
         if widths:
             t.autofit = False
             for col, w in zip(t._tbl.tblGrid.gridCol_lst, widths):  # LibreOffice doc do rong tu tblGrid
