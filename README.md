@@ -6,6 +6,7 @@ SQLite và tìm 5 ảnh giống nhất với một ảnh cây mới.
 
 Báo cáo đầy đủ: `docs/BaoCao_HeCSDL_AnhCay.docx` / `docs/BaoCao_HeCSDL_AnhCay.pdf`.
 Báo cáo 1 (nội dung 1 và 2, hạn 22/10/2026): `docs/BaoCao1_Nhom27_NoiDung1-2.docx` / `.pdf`.
+Báo cáo 2 (nội dung 3 và 4, hạn 03/12/2026): `docs/BaoCao2_Nhom27_NoiDung3-4.docx` / `.pdf`.
 Hướng dẫn dùng demo web: `docs/HUONG_DAN_DEMO.md`.
 
 ## Cấu trúc
@@ -34,6 +35,7 @@ python scripts/analyze_features.py      # 2. phân tích giá trị thông tin �
 python scripts/make_figures.py         # hình minh hoạ + ví dụ truy vấn
 python scripts/build_docs.py           # sinh báo cáo docx + pdf
 python scripts/build_report1.py         # Báo cáo 1 (nội dung 1, 2) docx + pdf
+python scripts/build_report2.py         # Báo cáo 2 (nội dung 3, 4) docx + pdf
 
 python scripts/query.py --image data/queries/query_01.jpg --backend linear --fig out.png   # truy vấn 1 ảnh
 python scripts/query.py --image data/queries/query_01.jpg --backend rtree --genus Quercus,Betula   # cây R + lọc theo chi

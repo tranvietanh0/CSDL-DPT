@@ -711,11 +711,11 @@ def sec_search(r: Report, ctx: dict):
     ])
 
 
-def sec_filter_feedback(r: Report, ctx: dict):
+def sec_filter_feedback(r: Report, ctx: dict, num: str = "5.3"):
     ev = ctx["eval"]
     fb = ev.get("feedback", {})
     k = ev["k"]
-    r.h(2, "5.3. Lọc theo siêu dữ liệu và phản hồi liên quan")
+    r.h(2, f"{num}. Lọc theo siêu dữ liệu và phản hồi liên quan")
     r.p("Lọc theo siêu dữ liệu (kết hợp truy vấn quan hệ với truy vấn theo nội dung): người dùng có thể giới hạn "
         "kết quả theo chi, nhóm hình thái hoặc giấy phép – các thuộc tính lưu trong bảng images. Với quét tuyến "
         "tính, bộ lọc được áp lên toàn bộ CSDL trước khi tính khoảng cách; với các chỉ mục, tập ứng viên được nới "
